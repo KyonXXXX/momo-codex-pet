@@ -14,6 +14,10 @@ public sealed class PetSettings
     public bool AlwaysOnTop { get; set; } = true;
     public bool LowUsageNotification { get; set; } = true;
     public int CompletedFocus { get; set; }
+    public PetLife Life { get; set; } = new();
+    public bool AutoInteract { get; set; } = true;
+    public bool AutoMove { get; set; }
+    public string MoodOverride { get; set; } = "auto";
     private static string FilePath => Path.Combine(App.DataDirectory, "settings.json");
     public static PetSettings Load()
     {
@@ -23,6 +27,8 @@ public sealed class PetSettings
             s.Scale = double.IsFinite(s.Scale) ? Math.Clamp(s.Scale, 0.75, 1.35) : 1;
             if (s.Left is double x && !double.IsFinite(x)) s.Left = null;
             if (s.Top is double y && !double.IsFinite(y)) s.Top = null;
+            s.Life ??= new(); s.Life.Normalize();
+            if (s.MoodOverride is not ("auto" or "happy" or "nomal" or "poorcondition" or "ill")) s.MoodOverride = "auto";
             return s;
         }
         catch (Exception e) when (e is IOException or JsonException or UnauthorizedAccessException) { return new(); }

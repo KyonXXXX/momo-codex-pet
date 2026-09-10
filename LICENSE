@@ -22,9 +22,13 @@ SOFTWARE.
 
 EXCLUDED THIRD-PARTY ARTWORK
 
-The VPet character animation artwork in assets/vpet/ is NOT covered by this
+The VPet character artwork in assets/vpet/ and assets/vpet-full/ is NOT covered by this
 MIT license. It is copyright the VUP-Simulator team and remains subject to
 licenses/VPet-Animation-License.zh-CN.md. Character artwork appearing in
 screenshots is subject to the same terms. Retain the attribution and license
 notice when distributing. Charging for distribution of these animation files
 is prohibited by the upstream artwork license.
+
+Upstream configuration data adapted into assets/vpet-catalog.json retains
+the VPet Apache-2.0 license: licenses/VPet-Code-Apache-2.0.txt. See also
+licenses/VPet-NOTICE.md for source, provenance, and modifications.

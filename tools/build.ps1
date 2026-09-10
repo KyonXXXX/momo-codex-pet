@@ -3,6 +3,15 @@ $ErrorActionPreference = 'Stop'
 $workspace = Split-Path -Parent $PSScriptRoot
 Push-Location -LiteralPath $workspace
 try {
+    $needsAssets = -not (Test-Path -LiteralPath 'assets\vpet-catalog.json')
+    if (-not $needsAssets) {
+        $catalog = Get-Content -LiteralPath 'assets\vpet-catalog.json' -Raw | ConvertFrom-Json
+        foreach ($blob in $catalog.blobs) { if (-not (Test-Path -LiteralPath (Join-Path 'assets' $blob.file))) { $needsAssets = $true; break } }
+    }
+    if ($needsAssets) {
+        node tools/sync-vpet.mjs
+        if ($LASTEXITCODE -ne 0) { throw 'VPet asset sync failed.' }
+    }
     dotnet build -c Release --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
     $test = Start-Process -FilePath (Join-Path $workspace 'bin\Release\net8.0-windows\Momo.exe') -ArgumentList '--self-test' -WindowStyle Hidden -Wait -PassThru

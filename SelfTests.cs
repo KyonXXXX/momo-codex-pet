@@ -17,6 +17,26 @@ internal static class SelfTests
         void Check(string name, Action test) { try { test(); report.Add("PASS " + name); } catch (Exception ex) { failures++; report.Add("FAIL " + name + ": " + ex.Message); } }
         static void Equal<T>(T actual, T expected) { if (!Equals(actual, expected)) throw new Exception($"Expected {expected}, got {actual}"); }
         static UsageSnapshot Parse(string json) { using var doc = JsonDocument.Parse(json); return UsageSnapshot.Parse(doc.RootElement, DateTimeOffset.UtcNow); }
+        Check("Old settings gain healthy pet defaults without changing quota visibility", () =>
+        {
+            var settings=JsonSerializer.Deserialize<PetSettings>("{\"ShowQuotaBubble\":false,\"CompletedFocus\":7}")!;
+            Equal(settings.ShowQuotaBubble,false);Equal(settings.CompletedFocus,7);Equal(settings.Life.Coins,300d);Equal(settings.Life.Mood,"happy");
+        });
+        Check("Pet care preserves currency on rejected feeding and clamps depleted stats", () =>
+        {
+            var life=new PetLife {Coins=0,Health=20};
+            var food=new PetFood("test","Meal","",null,"eat",10,20,20,0,5,2,1);
+            Equal(life.Feed(food,out _),false);Equal(life.Coins,0d);Equal(life.Health,20d);Equal(life.Mood,"ill");
+            life.Coins=10;Equal(life.Feed(food,out _),true);Equal(life.Coins,0d);Equal(life.Health,25d);
+            life.Hunger=-50;life.Thirst=double.NaN;life.Normalize();Equal(life.Hunger,0d);Equal(life.Thirst,85d);
+        });
+        Check("Activities pay only elapsed fraction and suspended time is capped", () =>
+        {
+            var life=new PetLife {Coins=0};var activity=new PetActivity("work","Work","WORK/WorkONE",60,8,3.5,2.5,1,.1,1);
+            life.Complete(activity,.5);Equal(life.Coins,240d);
+            double hunger=life.Hunger;life.Tick(3600,false,null);
+            Equal(hunger-life.Hunger<1,true);
+        });
         Check("Opaque bounds exclude transparent padding and include final visible pixel", () =>
         {
             var pixels = new byte[10 * 8 * 4];

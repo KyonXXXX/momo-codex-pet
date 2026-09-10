@@ -24,10 +24,25 @@ An anime-style Windows desktop companion with a compact speech bubble showing Co
 
 ## 使用
 
+**2.0 完整互动版：**右键桌宠或系统托盘 → **互动与动画图鉴**。默认角色的 **67 类动作、609 组动画、6,181 帧**全部接入，并提供四种状态和各动画变体的搜索播放入口。详见 [完整覆盖清单](docs/vpet-coverage.md)。
+
+- 互动：摸头、摸身体、捏脸、提起／摇晃、待机、卖萌、蹲下、打哈欠、吹泡泡、网球、思考、说话、生日与升级庆祝。
+- 移动：散步、快走、慢走、爬行、左右爬墙、沿顶部移动、落下和侧边躲藏／探头。自主互动默认开启，自主走动可在面板开启。
+- 投喂：123 种食物、饮料、药品和礼物，使用 12 套原始分层动画；完成后扣除宠物金币并改变数值，取消不扣费。另提供免费清水与基础餐。
+- 活动：13 项工作、学习和娱乐，有原始时长或 1 分钟体验；工作赚宠物金币、学习获得经验、娱乐改善心情，停止时按实际时长结算。低体力／健康会暂停。
+- 生活：体力、饱腹、水分、心情、健康、好感、经验和宠物金币随存档保留；离线不惩罚。表情可自动跟随数值，也可手动选择开心／平常／低落／生病。
+- 音乐：选择本地音乐后播放并配合音乐动画；停止动作会停止播放。启动与退出播放迎接／告别动画，领养纪念日自动庆祝。
+
+**宠物金币与 Codex credits 完全独立。**游戏中的「清屏」「删错误」「修屏幕」是虚拟活动，不会操作或删除电脑文件。此版本覆盖官方核心默认角色的动画互动；不包含 Steam 创意工坊、第三方模组、云存档或上游插件平台。
+
+<img src="docs/images/interactions.png" width="700" alt="Momo 完整互动面板，合成测试存档" />
+
 | 操作 | 功能 |
 | --- | --- |
-| 单击角色 / ♡ 摸摸 | 摸头动画与简短互动 |
-| 拖动角色或卡片空白处 | 移动桌宠，记住位置 |
+| 单击头部 / 身体 / 脸颊 | 摸头、摸身体或捏脸；♡ 摸摸固定摸头 |
+| 拖动角色或卡片空白处 | 提起角色移动桌宠，记住位置 |
+| 右键 → 互动与动画图鉴 | 完整互动、投喂、工作娱乐与全部动画 |
+| 右键 → 停止当前动作 | 停止播放或移动，结算活动并恢复待机 |
 | ◷ 专注 | 开始 25 分钟专注，角色陪读；再次点击结束 |
 | ☾ 休息 | 休息动画，额度继续刷新，气泡遵循显示开关 |
 | 右键角色 / 托盘 → 显示额度气泡 | 关闭或重新开启头顶气泡，记住选择 |
@@ -56,9 +71,9 @@ An anime-style Windows desktop companion with a compact speech bubble showing Co
 
 应用源代码按 [MIT License](LICENSE) 提供。**MIT 不覆盖角色素材**。
 
-角色动画来自 [LorisYounger/VPet](https://github.com/LorisYounger/VPet)，版权所有：**虚拟主播模拟器制作组**。本应用保留原始透明 PNG 帧与原始帧时长。随附的 10 组序列共 111 帧，包含待机、摸头、卖萌、睡眠和陪读所用的过渡 / 循环动画，以及预留的行走序列。当前界面不提供自主行走。
+角色动画来自 [LorisYounger/VPet](https://github.com/LorisYounger/VPet)，版权所有：**虚拟主播模拟器制作组**。本应用保留原始透明 PNG 帧与原始帧时长，完整包含固定版本的 609 组、6,181 帧；按文件哈希去重，动画和物品图像约 503 MB。完整包随附素材，首次运行无需联网下载图片。旧版 111 帧兼容序列仍保留。
 
-完整动画授权见 [licenses/VPet-Animation-License.zh-CN.md](licenses/VPet-Animation-License.zh-CN.md)，程序右键菜单也提供来源与授权页。所有源路径、固定上游 commit 与逐文件 Git blob 校验值保存在 `assets/animations.json`。
+完整动画授权见 [licenses/VPet-Animation-License.zh-CN.md](licenses/VPet-Animation-License.zh-CN.md)，程序右键菜单也提供来源与授权页。全部源路径、固定上游 commit 与逐文件 Git blob 校验值保存在 `assets/vpet-catalog.json`。上游配置转换与 Apache-2.0 许可说明见 [VPet-NOTICE](licenses/VPet-NOTICE.md)。
 
 素材在非商用场景下按上游的署名及链接条件使用；如改作商用或重新分发，请遵循随附原文的相应条件。动画素材不得收费出售。
 
@@ -69,12 +84,15 @@ An anime-style Windows desktop companion with a compact speech bubble showing Co
 使用 .NET 8 SDK，不依赖额外 NuGet UI 库：
 
 ```powershell
+node tools/sync-vpet.mjs
+node tools/verify-vpet.mjs
 dotnet build -c Release
 dotnet publish -c Release -o dist/Momo
 .\bin\Release\net8.0-windows\Momo.exe --self-test --live
 .\bin\Release\net8.0-windows\Momo.exe --capture artifacts/preview.png
 .\bin\Release\net8.0-windows\Momo.exe --capture artifacts/preview.png --verify-auto-refresh
 .\bin\Release\net8.0-windows\Momo.exe --capture artifacts/demo.png --demo
+.\bin\Release\net8.0-windows\Momo.exe --capture artifacts/full.png --demo --full-test
 ```
 
 自测覆盖：primary / secondary 周窗口、主桶选择、缺失数据、精确余额、零值、异常时间与动画帧加载；`--live` 额外测试真实 Codex 额度。报告生成于 `artifacts/test-results.txt`。`--capture` 测试真实按钮路由、计时完成、显示 / 隐藏、越界位置、过期状态和缺失数据，然后使用实际 WPF 渲染及实际账号数据导出四种状态，随后退出，不保存设置。附加 `--verify-auto-refresh` 会等候真实的 60 秒刷新周期，验证程序独立更新数据。
@@ -89,6 +107,8 @@ GitHub 上已有 Codex 宠物额度显示工具，包括 Windows 的 Quota Buddy
 
 ## 素材维护
 
-开发时若需重新下载素材，先将固定 commit 的 GitHub tree API 响应保存为 `vpet-tree.json`，上游 README 保存为 `vpet-readme.md`，再运行 `node tools/download-assets.mjs`。该工具校验每张图的 Git blob SHA-1。
+源码仓库保留完整目录和下载工具，大体积图片不进入 Git 历史。安装 Node.js 22+ 后运行 `node tools/sync-vpet.mjs`，会从固定上游版本下载缺失图片并验证 Git blob SHA-1；可中断后续传。`node tools/verify-vpet.mjs` 可离线验证完整性。`tools/build.ps1` 在缺图时自动同步。
+
+完整验证 `--full-test` 会解码所有 609 组动画、核对四状态匹配，并测试分层投喂、取消／结算、实际窗口移动、触摸区域与界面。`--interaction-smoke` 与 `--full-test` 合用可在素材已经完整验证后仅回归互动路径。公开截图统一使用合成数据。
 
 发布文件：`dist/Momo/Momo.exe`；分发时请保留同目录的全部运行文件、`assets` 和 `licenses`。

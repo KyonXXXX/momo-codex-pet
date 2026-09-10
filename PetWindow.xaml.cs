@@ -48,7 +48,7 @@ public partial class PetWindow : Window
         _settings = App.IsTestMode ? new() : PetSettings.Load();
         InitializeComponent();
         Topmost = _settings.AlwaysOnTop;
-        _animation = new AnimationPlayer(PetImage);
+        _animation = new AnimationPlayer(PetImage, _catalog);
         _animation.Play("idle");
         // Recheck only when the pose group or visible controls change, never on every frame.
         _animation.BoundsChanged += QueueBoundsCheck;
@@ -65,11 +65,13 @@ public partial class PetWindow : Window
         trayMenu.Items.Add(bubbleToggle);
         trayMenu.Items.Add("回到屏幕右下角", null, (_, _) => Dispatcher.Invoke(() => { ShowPet(); ResetPosition(); }));
         trayMenu.Items.Add(new Forms.ToolStripSeparator());
-        trayMenu.Items.Add("退出 Momo", null, (_, _) => Dispatcher.Invoke(Close));
+        trayMenu.Items.Add("互动与动画图鉴", null, (_, _) => Dispatcher.Invoke(ShowInteractionPanel));
+        trayMenu.Items.Add("停止当前动作", null, (_, _) => Dispatcher.Invoke(StopPetActivity));
+        trayMenu.Items.Add("退出 Momo", null, (_, _) => Dispatcher.Invoke(ExitWithAnimation));
         _tray.ContextMenuStrip = trayMenu;
         _refreshTimer.Tick += async (_, _) => await RefreshAsync();
         _clockTimer.Tick += (_, _) => TickClock();
-        _idleTimer.Tick += (_, _) => IdleAction();
+        _idleTimer.Tick += (_, _) => PetIdleAction();
         _bubbleTimer.Tick += (_, _) => { SpeechBubble.Visibility = Visibility.Collapsed; _bubbleTimer.Stop(); };
         Loaded += OnLoaded;
         SourceInitialized += (_, _) =>
@@ -89,9 +91,11 @@ public partial class PetWindow : Window
         if (_settings.Left is double x && _settings.Top is double y) { Left = x; Top = y; ClampPosition(); }
         else ResetPosition();
         _refreshTimer.Start(); _clockTimer.Start(); _idleTimer.Start();
+        InitializeInteractions();
         if (_args.Contains("--demo")) { _usage = DemoUsage(); RenderUsage(); }
         else await RefreshAsync();
         if (_args.Contains("--capture")) await CaptureAsync();
+        else PetStartup();
     }
 
     private async Task RefreshAsync()
@@ -163,6 +167,7 @@ public partial class PetWindow : Window
 
     private void TickClock()
     {
+        TickPetLife();
         UpdateFreshness();
         if (_focusEnd is not DateTimeOffset end) return;
         var left = end - DateTimeOffset.UtcNow;
@@ -185,19 +190,25 @@ public partial class PetWindow : Window
         if (_idleCount % 3 == 0) Say(new[] { "我陪你，慢慢来。", "记得喝水哦。", "摸摸我，充个电 ♡" }[(_idleCount / 3) % 3]);
     }
     private void PlayReturn(string animation) => _animation.Play(animation, false, ReturnToState);
-    private void ReturnToState() => _animation.Play(_sleeping ? "sleep" : _focusEnd is not null ? "focus" : "idle");
+    private void ReturnToState()
+    {
+        if(_actionFamily is not null)return;
+        if(_focusEnd is not null){_animation.Play("focus");return;}
+        var clip=_catalog.Choose(_sleeping?"Sleep":"Default",Mood,_sleeping?"B":"Single");
+        if(clip is not null)_animation.Play("@"+clip.Id);else _animation.Play("idle");
+    }
     private void Pat()
     {
-        if (_sleeping) { _sleeping = false; SleepButton.Content = "☾ 休息"; }
-        Say(new[] { "诶嘿，摸摸 ♡", "充电完成！", "今天也很努力呢。" }[Random.Shared.Next(3)]);
-        PlayReturn("pat");
+        PerformFamily("Touch_Head");
+        Say(new[] { "诶嘿，摸摸 ♡", "充电完成！", "今天也很努力呢。" }[Random.Shared.Next(3)],false);
     }
-    private void Say(string text) { SpeechText.Text = text; SpeechBubble.Visibility = Visibility.Visible; _bubbleTimer.Stop(); _bubbleTimer.Start(); }
+    private void Say(string text, bool animate = true) { SpeechText.Text = text; SpeechBubble.Visibility = Visibility.Visible; _bubbleTimer.Stop(); _bubbleTimer.Start(); }
     private void Notify(string title, string body)
     { if (!App.IsTestMode) _tray.ShowBalloonTip(5000, title, body, Forms.ToolTipIcon.Info); }
     private void PatClick(object sender, RoutedEventArgs e) => Pat();
     private void FocusClick(object sender, RoutedEventArgs e)
     {
+        CancelInteraction();FocusCaption.Text="陪你专注";
         if (_focusEnd is not null)
         {
             _focusEnd = null; FocusBadge.Visibility = Visibility.Collapsed; FocusButton.Content = "◷ 专注";
@@ -210,11 +221,13 @@ public partial class PetWindow : Window
     }
     private void SleepClick(object sender, RoutedEventArgs e)
     {
+        CancelInteraction();
         _sleeping = !_sleeping;
         if (_sleeping && _focusEnd is not null) { _focusEnd = null; FocusBadge.Visibility = Visibility.Collapsed; FocusButton.Content = "◷ 专注"; }
         SleepButton.Content = _sleeping ? "☀ 唤醒" : "☾ 休息";
         Say(_sleeping ? "眯一会儿，额度照常更新。" : "醒啦，继续加油 ♡");
-        _animation.Play(_sleeping ? "sleepIn" : "sleepOut", false, ReturnToState);
+        StartAction("Sleep",_sleeping?0:1,ReturnToState,prepare:false);
+        if(!_sleeping)EndAction();
     }
     private async void RefreshClick(object sender, RoutedEventArgs e) => await RefreshAsync();
 
@@ -233,13 +246,14 @@ public partial class PetWindow : Window
         _mouseOrigin = null; PetImage.ReleaseMouseCapture(); DragSafely();
     }
     private void PetMouseUp(object sender, MouseButtonEventArgs e)
-    { bool click = _mouseOrigin is not null; _mouseOrigin = null; PetImage.ReleaseMouseCapture(); if (click) Pat(); e.Handled = true; }
+    { bool click = _mouseOrigin is not null; var point=e.GetPosition(PetImage); _mouseOrigin = null; PetImage.ReleaseMouseCapture(); if (click) TouchAt(point); e.Handled = true; }
     private void DragSafely()
     {
         if (Mouse.LeftButton != MouseButtonState.Pressed) return;
         _dragging = true;
+        BeginRaisedDrag();
         try { DragMove(); } catch (InvalidOperationException) { }
-        finally { _dragging = false; ClampPosition(); SavePosition(); }
+        finally { _dragging = false; EndRaisedDrag(); ClampPosition(); SavePosition(); }
     }
 
     private void ApplySize()
@@ -300,6 +314,7 @@ public partial class PetWindow : Window
         // PNG canvas padding is not a desktop boundary. Use the union of the current
         // animation's opaque pixels so ordinary frame changes do not shift the pet.
         var pose = _animation.VisibleBounds;
+        if(pose.IsEmpty)pose=new Rect(.5,.5,0,0);
         double petLeft = PetStage.Margin.Left;
         var bounds = new Rect(petLeft + pose.Left * PetStage.Width, 0, pose.Width * PetStage.Width, Root.Height);
         bounds.Union(new Rect(petLeft + (PetStage.Width - 104) / 2, 0, 104, Root.Height));
@@ -323,6 +338,9 @@ public partial class PetWindow : Window
     private ContextMenu OpenMenu()
     {
         var menu = new ContextMenu();
+        Add(menu, "互动与动画图鉴", ShowInteractionPanel);
+        Add(menu, "停止当前动作", StopPetActivity);
+        menu.Items.Add(new Separator());
         Add(menu, "立即刷新额度", async () => await RefreshAsync());
         Add(menu, "查看所有额度与同步详情", ShowDetails);
         menu.Items.Add(new Separator());
@@ -339,7 +357,7 @@ public partial class PetWindow : Window
         menu.Items.Add(new Separator());
         Add(menu, "素材来源与使用说明", ShowAbout);
         Add(menu, "隐藏到托盘" + (_hotkeyRegistered ? "    Ctrl+Alt+M" : ""), () => { Hide(); _animation.Pause(true); });
-        Add(menu, "退出桌宠", Close);
+        Add(menu, "退出桌宠", ExitWithAnimation);
         menu.PlacementTarget = QuotaBubble.IsVisible ? (UIElement)MenuButton : PetImage;
         menu.IsOpen = true;
         return menu;
@@ -449,7 +467,7 @@ public partial class PetWindow : Window
         Assert(_sleeping && _focusEnd is null && !FocusBadge.IsVisible, "sleep cancels focus and keeps quota card visible");
         Assert(CreditsText.IsVisible && RemainingText.IsVisible, "weekly quota and balance remain visible during sleep");
         PatButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Assert(!_sleeping && _animation.Current == "pat", "pat button wakes character and plays head-pat animation");
+        Assert(!_sleeping && _animation.Current.StartsWith("@Touch_Head/"), "pat button wakes character and plays head-pat animation");
         FocusButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         int previousFocus = _settings.CompletedFocus;
         _focusEnd = DateTimeOffset.UtcNow.AddSeconds(-1); TickClock(); TickClock();
@@ -549,6 +567,7 @@ public partial class PetWindow : Window
             Assert(_usage.FetchedAt > last && !_failed, $"automatic 60-second timer obtained a new live reading at {_usage.FetchedAt:u}");
         }
         testReport.Add($"{(_args.Contains("--demo") ? "demo" : "live")}: remaining={RemainingText.Text}%, balance={CreditsText.Text}, status={StatusText.Text}");
+        if(_args.Contains("--full-test"))await TestFullInteractionsAsync(Assert,Path.GetDirectoryName(Path.GetFullPath(path))!);
         await File.WriteAllLinesAsync(Path.ChangeExtension(path, ".txt"), testReport);
         Close();
     }
@@ -563,6 +582,7 @@ public partial class PetWindow : Window
     private void Cleanup()
     {
         _closing = true; SavePosition(); _lifetime.Cancel();
+        FinishActivity(false);_motionTimer.Stop();_music.Close();_interactionPanel?.Close();
         _refreshTimer.Stop(); _clockTimer.Stop(); _idleTimer.Stop(); _bubbleTimer.Stop();
         _animation.Dispose();
         _tray.Visible = false; var icon = _tray.Icon; _tray.Dispose(); icon?.Dispose();
