@@ -50,6 +50,10 @@ public partial class PetWindow : Window
         Topmost = _settings.AlwaysOnTop;
         _animation = new AnimationPlayer(PetImage);
         _animation.Play("idle");
+        // Recheck only when the pose group or visible controls change, never on every frame.
+        _animation.BoundsChanged += QueueBoundsCheck;
+        SpeechBubble.IsVisibleChanged += (_, _) => QueueBoundsCheck();
+        FocusBadge.IsVisibleChanged += (_, _) => QueueBoundsCheck();
         _tray = new Forms.NotifyIcon { Text = "Momo · Codex 桌宠", Icon = CreateTrayIcon(), Visible = !App.IsTestMode };
         _tray.DoubleClick += (_, _) => Dispatcher.Invoke(ShowPet);
         var trayMenu = new Forms.ContextMenuStrip();
@@ -243,14 +247,13 @@ public partial class PetWindow : Window
         double spriteSize = _settings.Compact ? 192 : 256;
         PetStage.Width = PetStage.Height = PetImage.Width = PetImage.Height = spriteSize;
         double bubbleSpace = _settings.ShowQuotaBubble ? 108 : 0;
-        PetStage.Margin = new Thickness(0, 8 + bubbleSpace, 0, 0);
+        Root.Width = Math.Max(spriteSize, 220);
+        double spriteLeft = (Root.Width - spriteSize) / 2;
+        PetStage.Margin = new Thickness(spriteLeft, 8 + bubbleSpace, 0, 0);
         QuotaBubble.Visibility = _settings.ShowQuotaBubble ? Visibility.Visible : Visibility.Collapsed;
-        double bubbleLeft = Math.Round(spriteSize * 0.65625);
-        QuotaBubble.Margin = new Thickness((spriteSize - 160) / 2, 6, 0, 0);
-        SpeechBubble.Margin = new Thickness(bubbleLeft + 12, 134 + bubbleSpace, 0, 0);
-        FocusBadge.Margin = new Thickness(bubbleLeft + 20, Math.Max(180, spriteSize - 58) + bubbleSpace, 0, 0);
-        ActionBar.Margin = new Thickness(Math.Max(4, (spriteSize - 212) / 2), 0, 0, 5);
-        Root.Width = bubbleLeft + 182;
+        QuotaBubble.Margin = new Thickness((Root.Width - 160) / 2, 6, 0, 0);
+        SpeechBubble.Margin = new Thickness(0, 134 + bubbleSpace, 6, 0);
+        FocusBadge.Margin = new Thickness(0, Math.Max(180, spriteSize - 58) + bubbleSpace, 6, 0);
         Root.Height = spriteSize + 46 + bubbleSpace;
         var area = WorkingArea();
         double scale = Math.Min(_settings.Scale, Math.Min((area.Width - 20) / Root.Width, (area.Height - 20) / Root.Height));
@@ -274,14 +277,41 @@ public partial class PetWindow : Window
         return new Rect(screen.WorkingArea.X / dpi.DpiScaleX, screen.WorkingArea.Y / dpi.DpiScaleY, screen.WorkingArea.Width / dpi.DpiScaleX, screen.WorkingArea.Height / dpi.DpiScaleY);
     }
     private void ResetPosition()
-    { var area = WorkingArea(); Left = area.Right - Width - 22; Top = area.Bottom - Height - 14; ClampPosition(); SavePosition(); }
+    { UpdateLayout(); var area = WorkingArea(); Left = area.Right - VisibleHorizontalBounds().Right * WindowScale.ScaleX - 22; Top = area.Bottom - Height - 14; ClampPosition(); SavePosition(); }
     private void ClampPosition()
     {
+        UpdateLayout();
         var area = WorkingArea();
+        var bounds = VisibleHorizontalBounds();
+        double minLeft = area.Left - bounds.Left * WindowScale.ScaleX;
+        double maxLeft = area.Right - bounds.Right * WindowScale.ScaleX;
         if (double.IsNaN(Left)) Left = area.Right - Width;
         if (double.IsNaN(Top)) Top = area.Bottom - Height;
-        Left = Math.Clamp(Left, area.Left, Math.Max(area.Left, area.Right - Width));
+        Left = Math.Clamp(Left, minLeft, Math.Max(minLeft, maxLeft));
         Top = Math.Clamp(Top, area.Top, Math.Max(area.Top, area.Bottom - Height));
+    }
+    private void QueueBoundsCheck()
+    {
+        if (IsLoaded && !_closing)
+            Dispatcher.InvokeAsync(() => { if (!_closing && !_dragging) ClampPosition(); }, DispatcherPriority.Loaded);
+    }
+    private Rect VisibleHorizontalBounds()
+    {
+        // PNG canvas padding is not a desktop boundary. Use the union of the current
+        // animation's opaque pixels so ordinary frame changes do not shift the pet.
+        var pose = _animation.VisibleBounds;
+        double petLeft = PetStage.Margin.Left;
+        var bounds = new Rect(petLeft + pose.Left * PetStage.Width, 0, pose.Width * PetStage.Width, Root.Height);
+        bounds.Union(new Rect(petLeft + (PetStage.Width - 104) / 2, 0, 104, Root.Height));
+        foreach (var element in new FrameworkElement[] { ActionBar, QuotaBubble, SpeechBubble, FocusBadge })
+        {
+            if (element.Visibility != Visibility.Visible || element.ActualWidth <= 0) continue;
+            var origin = element.TranslatePoint(new Point(), Root);
+            double shadow = element == QuotaBubble ? 6 : 0;
+            bounds.Union(new Rect(origin.X - shadow, 0, element.ActualWidth + shadow * 2, Root.Height));
+        }
+        bounds.Inflate(2, 0);
+        return bounds;
     }
     private void SavePosition() { _settings.Left = Left; _settings.Top = Top; _settings.Save(); }
     private void DisplayChanged(object? sender, EventArgs e) => Dispatcher.InvokeAsync(() => { if (!_closing) { ApplySize(); SavePosition(); } });
@@ -406,7 +436,11 @@ public partial class PetWindow : Window
         void Assert(bool condition, string description)
         {
             testReport.Add((condition ? "PASS " : "FAIL ") + description);
-            if (!condition) throw new InvalidOperationException("UI integration test failed: " + description);
+            if (!condition)
+            {
+                File.WriteAllLines(Path.ChangeExtension(path, ".txt"), testReport);
+                throw new InvalidOperationException("UI integration test failed: " + description);
+            }
         }
         // Exercise the actual routed button events and window message handler.
         FocusButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -426,7 +460,8 @@ public partial class PetWindow : Window
         WindowProc(_hwnd, NativeMethods.ShowMessage, IntPtr.Zero, IntPtr.Zero, ref handled);
         Assert(IsVisible, "single-instance/tray restore route shows window");
         Left = -100000; Top = -100000; ClampPosition();
-        Assert(WorkingArea().Contains(new Rect(Left, Top, Width, Height)), "off-screen saved or dragged position is clamped into monitor work area");
+        var visibleBounds = VisibleHorizontalBounds();
+        Assert(WorkingArea().Contains(new Rect(Left + visibleBounds.Left * WindowScale.ScaleX, Top, visibleBounds.Width * WindowScale.ScaleX, Height)), "off-screen position keeps visible content within monitor work area");
         ResetPosition();
         var liveUsage = _usage;
         var previousCredits = CreditsText.Text;
@@ -445,7 +480,7 @@ public partial class PetWindow : Window
         Assert(_usage?.Main?.Weekly is not null && !_failed, _args.Contains("--demo") ? "synthetic demo data available for public screenshots" : "live Codex data available for local verification");
         Assert(QuotaCard.ActualWidth == 160 && QuotaCard.ActualHeight == 100, "quota bubble is 160 x 100 logical pixels");
         var cardOrigin = QuotaCard.TransformToAncestor(Root).Transform(new Point());
-        Assert(cardOrigin.Y + QuotaCard.ActualHeight <= PetStage.Margin.Top && Math.Abs(cardOrigin.X + 80 - PetStage.Width / 2) < 1, "quota bubble is centered above the character without covering it");
+        Assert(cardOrigin.Y + QuotaCard.ActualHeight <= PetStage.Margin.Top && Math.Abs(cardOrigin.X + 80 - (PetStage.Margin.Left + PetStage.Width / 2)) < 1, "quota bubble is centered above the character without covering it");
         Assert(_settings.ShowQuotaBubble && QuotaBubble.IsVisible, "quota bubble is enabled by default");
         double petScreenTop = Top + PetStage.Margin.Top * WindowScale.ScaleY;
         double visibleHeight = Root.Height;
@@ -482,6 +517,30 @@ public partial class PetWindow : Window
         _settings.Compact = true; ApplySize(); UpdateLayout();
         Assert(QuotaCard.ActualWidth == 160 && QuotaCard.ActualHeight == 100, "compact mode retains readable bubble size");
         testReport.Add($"compact: window {Width}x{Height}; credits visible={CreditsText.IsVisible}; weekly visible={RemainingText.IsVisible}");
+        foreach (bool compact in new[] { false, true })
+        foreach (double scale in new[] { .8, 1.0, 1.2 })
+        foreach (bool bubble in new[] { false, true })
+        foreach (string state in new[] { "idle", "pat", "focus", "sleep" })
+        {
+            _settings.Compact = compact; _settings.Scale = scale; _settings.ShowQuotaBubble = bubble;
+            _animation.Play(state); _animation.Pause(true);
+            FocusBadge.Visibility = state == "focus" ? Visibility.Visible : Visibility.Collapsed;
+            SpeechBubble.Visibility = state == "pat" ? Visibility.Visible : Visibility.Collapsed;
+            ApplySize(); UpdateLayout();
+            Left = WorkingArea().Right; ClampPosition();
+            var edge = VisibleHorizontalBounds(); var area = WorkingArea();
+            Assert(Math.Abs(Left + edge.Right * WindowScale.ScaleX - area.Right) < 1, $"right edge: {state}, compact={compact}, scale={scale}, bubble={bubble}");
+            if (state == "idle")
+            {
+                var edgeBitmap = new RenderTargetBitmap((int)Math.Ceiling(Width * 2), (int)Math.Ceiling(Height * 2), 192, 192, PixelFormats.Pbgra32);
+                edgeBitmap.Render(Root);
+                var opaque = AnimationPlayer.OpaqueBounds(edgeBitmap);
+                double visibleRight = Left + opaque.Right * edgeBitmap.PixelWidth / 2;
+                Assert(area.Right - visibleRight >= -1 && area.Right - visibleRight <= 4 * WindowScale.ScaleX, $"rendered pixels reach right screen edge within 4px: compact={compact}, scale={scale}, bubble={bubble}, gap={area.Right - visibleRight:0.##}");
+            }
+            Left = area.Left - Width; ClampPosition();
+            Assert(Math.Abs(Left + edge.Left * WindowScale.ScaleX - area.Left) < 1, $"left edge: {state}, compact={compact}, scale={scale}, bubble={bubble}");
+        }
         if (_args.Contains("--verify-auto-refresh") && !_args.Contains("--demo"))
         {
             var last = _usage!.FetchedAt;

@@ -17,6 +17,14 @@ internal static class SelfTests
         void Check(string name, Action test) { try { test(); report.Add("PASS " + name); } catch (Exception ex) { failures++; report.Add("FAIL " + name + ": " + ex.Message); } }
         static void Equal<T>(T actual, T expected) { if (!Equals(actual, expected)) throw new Exception($"Expected {expected}, got {actual}"); }
         static UsageSnapshot Parse(string json) { using var doc = JsonDocument.Parse(json); return UsageSnapshot.Parse(doc.RootElement, DateTimeOffset.UtcNow); }
+        Check("Opaque bounds exclude transparent padding and include final visible pixel", () =>
+        {
+            var pixels = new byte[10 * 8 * 4];
+            pixels[(2 * 10 + 3) * 4 + 3] = 255;
+            pixels[(6 * 10 + 7) * 4 + 3] = 1;
+            var bitmap = BitmapSource.Create(10, 8, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, pixels, 40);
+            Equal(AnimationPlayer.OpaqueBounds(bitmap), new System.Windows.Rect(.3, .25, .5, .625));
+        });
         Check("Bubble defaults on for existing settings and preserves an explicit off choice", () =>
         {
             Equal(JsonSerializer.Deserialize<PetSettings>("{\"Scale\":1}")!.ShowQuotaBubble, true);

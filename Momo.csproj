@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>Momo</AssemblyName>
     <RootNamespace>Momo</RootNamespace>
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>assets\momo.ico</ApplicationIcon>
   </PropertyGroup>
