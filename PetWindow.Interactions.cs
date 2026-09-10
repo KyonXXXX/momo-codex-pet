@@ -51,8 +51,8 @@ public partial class PetWindow
         _sideHideFamily=null;
         CancelInteraction();
         _bubbleTimer.Stop();SpeechBubble.Visibility=Visibility.Collapsed;
-        _sleeping=false;SleepButton.Content="☾ 休息";
-        _focusEnd=null;FocusButton.Content="◷ 专注";FocusBadge.Visibility=Visibility.Collapsed;
+        _sleeping=false;
+        _focusEnd=null;FocusBadge.Visibility=Visibility.Collapsed;
     }
     private void StartAction(string family,double seconds=8,Action? completed=null,bool prepare=true)
     {
@@ -94,7 +94,7 @@ public partial class PetWindow
     {
         _sideHideFamily=null;
         CancelInteraction();_sleeping=false;_focusEnd=null;
-        SleepButton.Content="☾ 休息";FocusButton.Content="◷ 专注";FocusBadge.Visibility=Visibility.Collapsed;
+        FocusBadge.Visibility=Visibility.Collapsed;
         ReturnToState();Say("好啦，歇一会儿。");
     }
     private void TickPetLife()
@@ -130,7 +130,7 @@ public partial class PetWindow
         if(family.StartsWith("MOVE/")){MovePet(family);return;}
         if(family.StartsWith("SideHide_")){HideAtSide(family);return;}
         if(family=="Music"){PlayMusic();return;}
-        if(family=="Sleep"){if(!_sleeping)SleepClick(this,new RoutedEventArgs());return;}
+        if(family=="Sleep"){StartAction("Sleep",0);_sleeping=true;return;}
         if(family.StartsWith("WORK/")){StartActivity(_catalog.Activities.First(a=>a.Family==family));return;}
         if(family is "Eat" or "Drink" or "Gift") { ShowInteractionPanel();return; }
         if(family=="BDay"){CelebrateBirthday();return;}
@@ -147,6 +147,7 @@ public partial class PetWindow
     private void BeginRaisedDrag()
     {
         StartAction("Raise/Raised_Static",0);_dragCursor=System.Windows.Forms.Cursor.Position;
+        BindRaisedToCursor(_dragCursor);
     }
     private void EndRaisedDrag(){_moveVelocity=default;EndAction();}
     private void MovePet(string family)
@@ -155,13 +156,13 @@ public partial class PetWindow
         bool right=family.Contains("right");double sign=right?1:-1;
         double speed=family.Contains("faster")?100:family.Contains("slow")?35:60;
         _moveVelocity=new Vector(sign*speed,0);
-        if(family.Contains("climb.top")){Top=WorkingArea().Top;_moveVelocity=new Vector(sign*40,0);}
+        if(family.Contains("climb.top")){ArrangePet();UpdateLayout();Top=WorkingArea().Top-PetOpaqueBounds().Top*WindowScale.ScaleY;_moveVelocity=new Vector(sign*40,0);}
         else if(family.Contains("climb")){SnapSide(right);_moveVelocity=new Vector(0,Top-WorkingArea().Top>80?-45:45);}
         else if(family.Contains("fall"))_moveVelocity=new Vector(sign*55,90);
         _motionAt=DateTimeOffset.UtcNow;
     }
     private void SnapSide(bool right)
-    {UpdateLayout();var area=WorkingArea();var bounds=VisibleHorizontalBounds();Left=right?area.Right-bounds.Right*WindowScale.ScaleX:area.Left-bounds.Left*WindowScale.ScaleX;ClampPosition();}
+    {ArrangePet();UpdateLayout();var area=WorkingArea();var bounds=PetOpaqueBounds();Left=right?area.Right-bounds.Right*WindowScale.ScaleX:area.Left-bounds.Left*WindowScale.ScaleX;ClampPosition();}
     private void HideAtSide(string family)
     { StartAction(family,0);_sideHideFamily=family.Replace("_Rise","_Main");SnapSide(family.Contains("Right"));Say("靠近我会探头，点我就回来啦。",false); }
     private void SidePeek(bool peek)
@@ -178,14 +179,21 @@ public partial class PetWindow
             var cursor=System.Windows.Forms.Cursor.Position;
             bool moved=Math.Abs(cursor.X-_dragCursor.X)+Math.Abs(cursor.Y-_dragCursor.Y)>3;_dragCursor=cursor;
             string family=moved?"Raise/Raised_Dynamic":"Raise/Raised_Static";
-            if(_actionFamily!=family)StartAction(family,0,prepare:false);
+            if(_actionFamily!=family)
+            {
+                StartAction(family,0,prepare:false);
+                if(!moved)LoopAction(_actionGeneration);
+            }
+            BindRaisedToCursor(cursor);
             return;
         }
         if(_moveVelocity.Length<.01||!IsVisible)return;
         double x=Left,y=Top;
-        Left+=_moveVelocity.X*seconds*WindowScale.ScaleX;Top+=_moveVelocity.Y*seconds*WindowScale.ScaleY;
+        var movement = new Vector(_moveVelocity.X*seconds*WindowScale.ScaleX, _moveVelocity.Y*seconds*WindowScale.ScaleY);
+        Left+=movement.X;Top+=movement.Y;
         ClampPosition();
-        if(Math.Abs(Left-x)<.01&&Math.Abs(Top-y)<.01){EndAction();SavePosition();}
+        // A subpixel first tick can be rounded away by the native window; that is not a wall collision.
+        if(movement.Length>=1&&Math.Abs(Left-x)<.01&&Math.Abs(Top-y)<.01){EndAction();SavePosition();}
     }
     private void FeedPet(PetFood food)
     {

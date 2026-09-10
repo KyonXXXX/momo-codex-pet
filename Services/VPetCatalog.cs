@@ -20,6 +20,8 @@ public sealed class VPetCatalog
     public IReadOnlyList<PetFood> Foods { get; }
     public IReadOnlyList<PetActivity> Activities { get; }
     public IReadOnlyDictionary<string, PetClip> ById { get; }
+    private readonly Dictionary<string, System.Windows.Point> _raisePoints = new();
+    public System.Windows.Point RaisePoint(string mood) => _raisePoints.TryGetValue(mood, out var point) ? point : _raisePoints["nomal"];
     public IEnumerable<string> Families => Clips.Where(c => !c.Layer).Select(c => c.Family).Distinct().OrderBy(Label);
     public VPetCatalog()
     {
@@ -31,6 +33,9 @@ public sealed class VPetCatalog
         ById = Clips.ToDictionary(c => c.Id);
         static string S(JsonElement e, string key, string fallback = "") => e.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()! : fallback;
         static double N(JsonElement e, string key, double fallback = 0) => double.TryParse(S(e, key), NumberStyles.Float, CultureInfo.InvariantCulture, out var n) && double.IsFinite(n) ? n : fallback;
+        var raise = root.GetProperty("touch").GetProperty("raisepoint");
+        foreach (string mood in new[] { "happy", "nomal", "poorcondition", "ill" })
+            _raisePoints[mood] = new System.Windows.Point(N(raise, mood + "_x"), N(raise, mood + "_y"));
         Foods = root.GetProperty("foods").EnumerateArray().Select(e => new PetFood(S(e,"name"), S(e,"type"), S(e,"desc"), S(e,"file") is { Length: > 0 } file ? file : null, S(e,"graph","eat"), N(e,"price"), N(e,"strength"), N(e,"strengthfood"), N(e,"strengthdrink"), N(e,"health"), N(e,"feeling"), N(e,"exp"), N(e,"likability",1))).ToList();
         Activities = root.GetProperty("activities").EnumerateArray().Select(e => new PetActivity(S(e,"name"), S(e,"type"), Clips.First(c => c.Family.StartsWith("WORK/") && c.Family[5..].Equals(S(e,"graph"), StringComparison.OrdinalIgnoreCase)).Family, N(e,"time",30), N(e,"moneybase",10), N(e,"strengthfood"), N(e,"strengthdrink"), N(e,"feeling"), N(e,"finishbonus"), (int)N(e,"levellimit",1))).ToList();
     }

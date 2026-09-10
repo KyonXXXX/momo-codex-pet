@@ -1,16 +1,11 @@
-# Momo full VPet interaction implementation
+# Momo 2.0.1 maintenance handoff
 
-- Phase: release. Scope: official core default character at pinned VPet commit 2e99a42ebeff71d792118f2e8de744b773042f8d, all PNG variants and their direct interactions. Third-party Workshop mods and Steam platform services are outside the character interaction scope.
-- Preserve: Codex quota bubble (default on, toggle persisted), accurate live quota, compact size and visible-content screen bounds, current save compatibility.
-- Outcome: head/body/cheek touch, raised dragging, movement and edge interactions, care/feeding/gifts, activities, moods, idle behavior, startup/shutdown, music, celebrations, complete searchable animation catalog.
-- Assets: tools/sync-vpet.mjs creates complete hashed catalog and downloads deduplicated original images. Large asset files are distributed with release packages, not committed as Git history.
-- Owners: Services/AnimationPlayer.cs playback; new catalog/interaction services own content and state; PetWindow owns screen movement and quota UI; settings retain local pet progress separately from Codex credits.
-- Verification required: catalog completeness/hash checks, state transitions/cancellation/reward once/save compatibility, every clip decode, representative WPF renders and edge controls, packaged launch.
-- Current status: implementation and packaged verification complete; installed Momo 2.0 running. 67 families / 609 groups / 6,181 frames, 123 items, 13 activities, 12 layered recipes. Four-tab panel, input hit regions, raised dragging, movement, care, timers, local music, celebrations, searchable gallery are connected.
-- Validation: 3,755 deduplicated source files (~503 MB) hash-verified; 609 full animation groups decoded; 256 family/mood resolution checks passed. 14 pure self-tests passed. Final WPF interaction smoke: 159 checks passed, including quota/edge regressions, feeding cancellation and one-time charge, activity settlement, actual horizontal/vertical window movement, raised drag mode, cheek/body input regions, and panel tabs. Runtime-rendered screenshots inspected.
-- Evidence: local artifacts/full-inventory-check.txt (inventory and mode coverage; its final drag-test harness assertion was superseded by corrected bounded cursor delta), artifacts/final-interactions.txt (all final interaction checks pass), artifacts/test-results.txt. Public screenshots contain synthetic data only.
-- Memory: bounded decoded-frame working set (120 frame entries plus current clip); observed full-library stress working set ~355 MB. All image bytes kept original and loaded as needed.
-- Limits: Windows WPF only; audio-file dialog and physical audio output not manually tested, multi-monitor/DPI combinations not exhaustively tested. Workshop/Steam/cloud/plugin services are not part of this implementation; differences documented in docs/vpet-coverage.md.
-- DEBUG_HANDOFF.md not created: no repeated unresolved implementation defect. A test cursor arithmetic overflow was corrected and the interaction smoke passed.
-- Packaged evidence: artifacts/release-final.txt has 159 passing WPF checks; latest packaged --self-test --live has 15 passes including live Codex read. Local installed path: dist/Momo/Momo.exe. Release archive: dist/Momo-v2.0.0-windows-x64.zip (~507 MB).
-- Next safest task: observe normal desktop use and address concrete user feedback; release target is GitHub v2.0.0.
+- Phase: release verification. User outcome: mouse follows the raised clothing corner; bottom shortcuts removed and focus moved into right-click menu; quota bubble automatically moves inward at screen edges.
+- Owners: Services/VPetCatalog.cs reads official mood anchors; PetWindow handles captured drag input; PetWindow.Layout.cs preserves sprite origin across bubble changes and attaches opaque character bounds to walls. Ground shadow is hidden during airborne actions.
+- Native VPet touch/sleep remain in the full interaction system; the old bottom shortcut handlers are removed.
+- Assets unchanged: pinned VPet 2e99a42ebeff71d792118f2e8de744b773042f8d, 67 families / 609 groups / 6,181 frames, 123 items, 13 activities, 12 layered recipes. Original PNGs remain in release packages rather than Git history.
+- Verification: 388 packaged WPF checks passed, including render-content and side-tail pixel assertions. Pure/live checks: 15 passed. Evidence: artifacts/release-2.0.1.txt and artifacts/test-results.txt.
+- Coverage: four raise moods, two sizes, three scales, capture loss, focus menu, quota toggle at walls/top/side hiding, native movement, feeding/activity settlement, touch regions and gallery tabs. Public captures use synthetic quota values only.
+- Debug findings: clip-union bounds differ from the first frame; fractional native movement must not be mistaken for collision. See DEBUG_HANDOFF.md.
+- Save compatibility and quota client unchanged. Limits: Windows WPF only; mixed-DPI cross-monitor behavior and physical audio output not exhaustively tested.
+- Release artifacts: dist/release-v2.0.1 and dist/Momo-v2.0.1-windows-x64.zip. Next: observe ordinary desktop use, especially cross-monitor dragging on mixed DPI.

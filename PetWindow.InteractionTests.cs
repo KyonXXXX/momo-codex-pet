@@ -63,12 +63,12 @@ public partial class PetWindow
         MovePet("MOVE/walk.right");double initial=Left;
         await Task.Delay(400);check(Left>initial,"walking updates native window position");StopPetActivity();
         MovePet("MOVE/climb.right");double initialTop=Top;
-        await Task.Delay(400);check(Top<initialTop,"wall climbing updates vertical position");StopPetActivity();
+        await Task.Delay(400);check(Top<initialTop,$"wall climbing updates vertical position: start={initialTop:0.##}, end={Top:0.##}, action={_actionFamily}, velocity={_moveVelocity}");StopPetActivity();
         StartAction("Raise/Raised_Static",0);_dragging=true;var currentCursor=System.Windows.Forms.Cursor.Position;_dragCursor=new System.Drawing.Point(currentCursor.X-100,currentCursor.Y);MotionTick();
         check(_actionFamily=="Raise/Raised_Dynamic","drag motion selects raised dynamic animation");_dragging=false;StopPetActivity();
         HideAtSide("SideHide_Right_Main");SidePeek(true);check(_actionFamily=="SideHide_Right_Rise","side hiding responds with peek animation");
         SidePeek(false);check(_actionFamily=="SideHide_Right_Main","pointer leaving returns to side hiding");StopPetActivity();
-        HideAtSide("SideHide_Left_Main");FocusClick(this,new RoutedEventArgs());SidePeek(true);
+        HideAtSide("SideHide_Left_Main");ToggleFocus();SidePeek(true);
         check(_sideHideFamily is null&&_focusEnd is not null&&_animation.Current=="focusIn","new focus activity clears side-hover callbacks");StopPetActivity();
         TouchAt(new Point(PetImage.Width*.35,PetImage.Height*.3));check(_actionFamily=="Pinch","cheek hit region invokes pinch");
         TouchAt(new Point(PetImage.Width*.5,PetImage.Height*.5));check(_actionFamily=="Touch_Body","body hit region invokes body touch");StopPetActivity();

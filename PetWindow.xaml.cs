@@ -40,7 +40,7 @@ public partial class PetWindow : Window
     private IntPtr _hwnd;
     private HwndSource? _source;
     private bool _hotkeyRegistered;
-    private int _idleCount;
+
 
     public PetWindow(string[] args)
     {
@@ -174,7 +174,7 @@ public partial class PetWindow : Window
         if (left <= TimeSpan.Zero)
         {
             _focusEnd = null; _settings.CompletedFocus++; _settings.Save();
-            FocusBadge.Visibility = Visibility.Collapsed; FocusButton.Content = "◷ 专注";
+            FocusBadge.Visibility = Visibility.Collapsed;
             Say("专注完成，伸个懒腰 ♡");
             Notify("专注完成 ♡", "辛苦啦，休息 5 分钟，再开始下一段吧。");
             PlayReturn("focusOut");
@@ -182,13 +182,6 @@ public partial class PetWindow : Window
         else FocusTimeText.Text = $"{(int)left.TotalMinutes:00}:{left.Seconds:00}";
     }
 
-    private void IdleAction()
-    {
-        if (_sleeping || _focusEnd is not null || _dragging || !IsVisible || _animation.Current != "idle") return;
-        _idleCount++;
-        PlayReturn("meow");
-        if (_idleCount % 3 == 0) Say(new[] { "我陪你，慢慢来。", "记得喝水哦。", "摸摸我，充个电 ♡" }[(_idleCount / 3) % 3]);
-    }
     private void PlayReturn(string animation) => _animation.Play(animation, false, ReturnToState);
     private void ReturnToState()
     {
@@ -197,93 +190,60 @@ public partial class PetWindow : Window
         var clip=_catalog.Choose(_sleeping?"Sleep":"Default",Mood,_sleeping?"B":"Single");
         if(clip is not null)_animation.Play("@"+clip.Id);else _animation.Play("idle");
     }
-    private void Pat()
-    {
-        PerformFamily("Touch_Head");
-        Say(new[] { "诶嘿，摸摸 ♡", "充电完成！", "今天也很努力呢。" }[Random.Shared.Next(3)],false);
-    }
     private void Say(string text, bool animate = true) { SpeechText.Text = text; SpeechBubble.Visibility = Visibility.Visible; _bubbleTimer.Stop(); _bubbleTimer.Start(); }
     private void Notify(string title, string body)
     { if (!App.IsTestMode) _tray.ShowBalloonTip(5000, title, body, Forms.ToolTipIcon.Info); }
-    private void PatClick(object sender, RoutedEventArgs e) => Pat();
-    private void FocusClick(object sender, RoutedEventArgs e)
+    private void ToggleFocus()
     {
         CancelInteraction();FocusCaption.Text="陪你专注";
         if (_focusEnd is not null)
         {
-            _focusEnd = null; FocusBadge.Visibility = Visibility.Collapsed; FocusButton.Content = "◷ 专注";
+            _focusEnd = null; FocusBadge.Visibility = Visibility.Collapsed;
             Say("歇一下，再继续。"); PlayReturn("focusOut"); return;
         }
-        _sleeping = false; SleepButton.Content = "☾ 休息";
+        _sleeping = false;
         _focusEnd = DateTimeOffset.UtcNow.AddMinutes(25); FocusTimeText.Text = "25:00";
-        FocusBadge.Visibility = Visibility.Visible; FocusButton.Content = "□ 结束";
+        FocusBadge.Visibility = Visibility.Visible;
         Say("陪你专注 25 分钟。"); _animation.Play("focusIn", false, ReturnToState);
-    }
-    private void SleepClick(object sender, RoutedEventArgs e)
-    {
-        CancelInteraction();
-        _sleeping = !_sleeping;
-        if (_sleeping && _focusEnd is not null) { _focusEnd = null; FocusBadge.Visibility = Visibility.Collapsed; FocusButton.Content = "◷ 专注"; }
-        SleepButton.Content = _sleeping ? "☀ 唤醒" : "☾ 休息";
-        Say(_sleeping ? "眯一会儿，额度照常更新。" : "醒啦，继续加油 ♡");
-        StartAction("Sleep",_sleeping?0:1,ReturnToState,prepare:false);
-        if(!_sleeping)EndAction();
     }
     private async void RefreshClick(object sender, RoutedEventArgs e) => await RefreshAsync();
 
     private void CardDrag(object sender, MouseButtonEventArgs e)
     {
         if (FindParent<Button>(e.OriginalSource as DependencyObject) is not null) return;
-        DragSafely();
+        if (Mouse.LeftButton != MouseButtonState.Pressed) return;
+        CancelInteraction(); ReturnToState(); ClampPosition();
+        try { DragMove(); } catch (InvalidOperationException) { }
+        finally { ClampPosition(); SavePosition(); }
     }
     private static T? FindParent<T>(DependencyObject? obj) where T : DependencyObject
     { while (obj is not null) { if (obj is T match) return match; obj = VisualTreeHelper.GetParent(obj); } return null; }
-    private void PetMouseDown(object sender, MouseButtonEventArgs e) { _mouseOrigin = e.GetPosition(this); PetImage.CaptureMouse(); e.Handled = true; }
+    private void PetMouseDown(object sender, MouseButtonEventArgs e)
+    { _mouseOrigin = e.GetPosition(this); PetImage.CaptureMouse(); e.Handled = true; }
     private void PetMouseMove(object sender, MouseEventArgs e)
     {
-        if (_mouseOrigin is not Point origin || e.LeftButton != MouseButtonState.Pressed) return;
-        if ((e.GetPosition(this) - origin).Length < 5) return;
-        _mouseOrigin = null; PetImage.ReleaseMouseCapture(); DragSafely();
+        if (e.LeftButton != MouseButtonState.Pressed) { FinishPetDrag(); return; }
+        if (!_dragging && _mouseOrigin is Point origin && (e.GetPosition(this) - origin).Length >= 5)
+        { _mouseOrigin = null; _dragging = true; BeginRaisedDrag(); }
+        if (_dragging) BindRaisedToCursor(System.Windows.Forms.Cursor.Position);
     }
     private void PetMouseUp(object sender, MouseButtonEventArgs e)
-    { bool click = _mouseOrigin is not null; var point=e.GetPosition(PetImage); _mouseOrigin = null; PetImage.ReleaseMouseCapture(); if (click) TouchAt(point); e.Handled = true; }
-    private void DragSafely()
     {
-        if (Mouse.LeftButton != MouseButtonState.Pressed) return;
-        _dragging = true;
-        BeginRaisedDrag();
-        try { DragMove(); } catch (InvalidOperationException) { }
-        finally { _dragging = false; EndRaisedDrag(); ClampPosition(); SavePosition(); }
+        bool click = !_dragging && _mouseOrigin is not null;
+        var point = e.GetPosition(PetImage);
+        _mouseOrigin = null; FinishPetDrag(); PetImage.ReleaseMouseCapture();
+        if (click) TouchAt(point); e.Handled = true;
+    }
+    private void PetLostCapture(object sender, MouseEventArgs e) { _mouseOrigin = null; FinishPetDrag(); }
+    private void FinishPetDrag()
+    {
+        if (!_dragging) return;
+        _dragging = false; EndRaisedDrag(); ClampPosition(); SavePosition();
     }
 
-    private void ApplySize()
-    {
-        double spriteSize = _settings.Compact ? 192 : 256;
-        PetStage.Width = PetStage.Height = PetImage.Width = PetImage.Height = spriteSize;
-        double bubbleSpace = _settings.ShowQuotaBubble ? 108 : 0;
-        Root.Width = Math.Max(spriteSize, 220);
-        double spriteLeft = (Root.Width - spriteSize) / 2;
-        PetStage.Margin = new Thickness(spriteLeft, 8 + bubbleSpace, 0, 0);
-        QuotaBubble.Visibility = _settings.ShowQuotaBubble ? Visibility.Visible : Visibility.Collapsed;
-        QuotaBubble.Margin = new Thickness((Root.Width - 160) / 2, 6, 0, 0);
-        SpeechBubble.Margin = new Thickness(0, 134 + bubbleSpace, 6, 0);
-        FocusBadge.Margin = new Thickness(0, Math.Max(180, spriteSize - 58) + bubbleSpace, 6, 0);
-        Root.Height = spriteSize + 46 + bubbleSpace;
-        var area = WorkingArea();
-        double scale = Math.Min(_settings.Scale, Math.Min((area.Width - 20) / Root.Width, (area.Height - 20) / Root.Height));
-        WindowScale.ScaleX = scale; WindowScale.ScaleY = scale;
-        Width = Root.Width * scale; Height = Root.Height * scale;
-        ClampPosition();
-    }
+    private void ApplySize() { ArrangePet(); ClampPosition(); }
     private void ToggleQuotaBubble()
-    {
-        double petTop = Top + PetStage.Margin.Top * WindowScale.ScaleY;
-        _settings.ShowQuotaBubble = !_settings.ShowQuotaBubble;
-        ApplySize();
-        // Keep the character in place while the space above it opens or closes.
-        Top = petTop - PetStage.Margin.Top * WindowScale.ScaleY;
-        ClampPosition(); SavePosition();
-    }
+    { _settings.ShowQuotaBubble = !_settings.ShowQuotaBubble; ApplySize(); SavePosition(); }
     private Rect WorkingArea()
     {
         var screen = _hwnd == IntPtr.Zero ? Forms.Screen.PrimaryScreen! : Forms.Screen.FromHandle(_hwnd);
@@ -292,42 +252,6 @@ public partial class PetWindow : Window
     }
     private void ResetPosition()
     { UpdateLayout(); var area = WorkingArea(); Left = area.Right - VisibleHorizontalBounds().Right * WindowScale.ScaleX - 22; Top = area.Bottom - Height - 14; ClampPosition(); SavePosition(); }
-    private void ClampPosition()
-    {
-        UpdateLayout();
-        var area = WorkingArea();
-        var bounds = VisibleHorizontalBounds();
-        double minLeft = area.Left - bounds.Left * WindowScale.ScaleX;
-        double maxLeft = area.Right - bounds.Right * WindowScale.ScaleX;
-        if (double.IsNaN(Left)) Left = area.Right - Width;
-        if (double.IsNaN(Top)) Top = area.Bottom - Height;
-        Left = Math.Clamp(Left, minLeft, Math.Max(minLeft, maxLeft));
-        Top = Math.Clamp(Top, area.Top, Math.Max(area.Top, area.Bottom - Height));
-    }
-    private void QueueBoundsCheck()
-    {
-        if (IsLoaded && !_closing)
-            Dispatcher.InvokeAsync(() => { if (!_closing && !_dragging) ClampPosition(); }, DispatcherPriority.Loaded);
-    }
-    private Rect VisibleHorizontalBounds()
-    {
-        // PNG canvas padding is not a desktop boundary. Use the union of the current
-        // animation's opaque pixels so ordinary frame changes do not shift the pet.
-        var pose = _animation.VisibleBounds;
-        if(pose.IsEmpty)pose=new Rect(.5,.5,0,0);
-        double petLeft = PetStage.Margin.Left;
-        var bounds = new Rect(petLeft + pose.Left * PetStage.Width, 0, pose.Width * PetStage.Width, Root.Height);
-        bounds.Union(new Rect(petLeft + (PetStage.Width - 104) / 2, 0, 104, Root.Height));
-        foreach (var element in new FrameworkElement[] { ActionBar, QuotaBubble, SpeechBubble, FocusBadge })
-        {
-            if (element.Visibility != Visibility.Visible || element.ActualWidth <= 0) continue;
-            var origin = element.TranslatePoint(new Point(), Root);
-            double shadow = element == QuotaBubble ? 6 : 0;
-            bounds.Union(new Rect(origin.X - shadow, 0, element.ActualWidth + shadow * 2, Root.Height));
-        }
-        bounds.Inflate(2, 0);
-        return bounds;
-    }
     private void SavePosition() { _settings.Left = Left; _settings.Top = Top; _settings.Save(); }
     private void DisplayChanged(object? sender, EventArgs e) => Dispatcher.InvokeAsync(() => { if (!_closing) { ApplySize(); SavePosition(); } });
     private void PowerChanged(object sender, PowerModeChangedEventArgs e)
@@ -340,6 +264,7 @@ public partial class PetWindow : Window
         var menu = new ContextMenu();
         Add(menu, "互动与动画图鉴", ShowInteractionPanel);
         Add(menu, "停止当前动作", StopPetActivity);
+        Add(menu, _focusEnd is null ? "专注 25 分钟" : "结束专注", ToggleFocus);
         menu.Items.Add(new Separator());
         Add(menu, "立即刷新额度", async () => await RefreshAsync());
         Add(menu, "查看所有额度与同步详情", ShowDetails);
@@ -413,7 +338,7 @@ public partial class PetWindow : Window
     private void ShowAbout()
     {
         string attribution = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "licenses", "VPet-Animation-License.zh-CN.md"));
-        ShowTextWindow("关于 Momo", "MOMO · 你的 Codex 小伴侣\n\n点击角色或「摸摸」互动，拖动角色或卡片改变位置。\n「专注」开启 25 分钟计时；「休息」仍然刷新额度。\n右键可调整大小、置顶和开机启动。\nCtrl+Alt+M 显示 / 隐藏；托盘双击也可找回。\n\n角色动画来自 VPet，版权所有：虚拟主播模拟器制作组。\nhttps://github.com/LorisYounger/VPet\n\n" + attribution, true);
+        ShowTextWindow("关于 Momo", "MOMO · 你的 Codex 小伴侣\n\n点击角色互动，提起时鼠标会对齐衣角。\n右键「专注 25 分钟」开始计时；再次右键可结束。\n右键可调整大小、置顶和开机启动。\nCtrl+Alt+M 显示 / 隐藏；托盘双击也可找回。\n\n角色动画来自 VPet，版权所有：虚拟主播模拟器制作组。\nhttps://github.com/LorisYounger/VPet\n\n" + attribution, true);
     }
     private void ShowTextWindow(string title, string text, bool link = false)
     {
@@ -461,14 +386,14 @@ public partial class PetWindow : Window
             }
         }
         // Exercise the actual routed button events and window message handler.
-        FocusButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Assert(_focusEnd is not null && FocusBadge.IsVisible && _animation.Current == "focusIn", "focus button starts timer and entry animation");
-        SleepButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        ClickFocusMenu();
+        Assert(_focusEnd is not null && FocusBadge.IsVisible && _animation.Current == "focusIn", "focus menu starts timer and entry animation");
+        PerformFamily("Sleep");
         Assert(_sleeping && _focusEnd is null && !FocusBadge.IsVisible, "sleep cancels focus and keeps quota card visible");
         Assert(CreditsText.IsVisible && RemainingText.IsVisible, "weekly quota and balance remain visible during sleep");
-        PatButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Assert(!_sleeping && _animation.Current.StartsWith("@Touch_Head/"), "pat button wakes character and plays head-pat animation");
-        FocusButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        PerformFamily("Touch_Head");
+        Assert(!_sleeping && _animation.Current.StartsWith("@Touch_Head/"), "native head touch wakes character and plays head-pat animation");
+        ClickFocusMenu();
         int previousFocus = _settings.CompletedFocus;
         _focusEnd = DateTimeOffset.UtcNow.AddSeconds(-1); TickClock(); TickClock();
         Assert(_focusEnd is null && _settings.CompletedFocus == previousFocus + 1, "focus completion fires once using wall-clock deadline");
@@ -479,7 +404,9 @@ public partial class PetWindow : Window
         Assert(IsVisible, "single-instance/tray restore route shows window");
         Left = -100000; Top = -100000; ClampPosition();
         var visibleBounds = VisibleHorizontalBounds();
-        Assert(WorkingArea().Contains(new Rect(Left + visibleBounds.Left * WindowScale.ScaleX, Top, visibleBounds.Width * WindowScale.ScaleX, Height)), "off-screen position keeps visible content within monitor work area");
+        var onScreen = new Rect(Left + visibleBounds.Left * WindowScale.ScaleX, Top + visibleBounds.Top * WindowScale.ScaleY, visibleBounds.Width * WindowScale.ScaleX, visibleBounds.Height * WindowScale.ScaleY);
+        var workArea = WorkingArea(); workArea.Inflate(1, 1);
+        Assert(workArea.Contains(onScreen), "off-screen position keeps visible content within monitor work area");
         ResetPosition();
         var liveUsage = _usage;
         var previousCredits = CreditsText.Text;
@@ -554,11 +481,17 @@ public partial class PetWindow : Window
                 edgeBitmap.Render(Root);
                 var opaque = AnimationPlayer.OpaqueBounds(edgeBitmap);
                 double visibleRight = Left + opaque.Right * edgeBitmap.PixelWidth / 2;
-                Assert(area.Right - visibleRight >= -1 && area.Right - visibleRight <= 4 * WindowScale.ScaleX, $"rendered pixels reach right screen edge within 4px: compact={compact}, scale={scale}, bubble={bubble}, gap={area.Right - visibleRight:0.##}");
+                // Stable movement bounds contain every frame; this screenshot contains only the current pose.
+                var currentPose = AnimationPlayer.OpaqueBounds((BitmapSource)PetImage.Source);
+                double currentRight = PetStage.Margin.Left + Math.Max(currentPose.Right * PetStage.Width, (PetStage.Width + 104) / 2);
+                if (bubble) currentRight = Math.Max(currentRight, QuotaBubble.Margin.Left + QuotaBubble.Width);
+                double expectedRight = Left + currentRight * WindowScale.ScaleX;
+                Assert(Math.Abs(expectedRight - visibleRight) <= (bubble ? 10 : 2), $"rendered edge matches current pose (clip union permits animation motion): compact={compact}, scale={scale}, bubble={bubble}, gap={area.Right - visibleRight:0.##}");
             }
-            Left = area.Left - Width; ClampPosition();
+            Left = area.Left - Width; ClampPosition(); edge = VisibleHorizontalBounds();
             Assert(Math.Abs(Left + edge.Left * WindowScale.ScaleX - area.Left) < 1, $"left edge: {state}, compact={compact}, scale={scale}, bubble={bubble}");
         }
+        await TestAnimationRepairsAsync(Assert, Path.GetDirectoryName(Path.GetFullPath(path))!);
         if (_args.Contains("--verify-auto-refresh") && !_args.Contains("--demo"))
         {
             var last = _usage!.FetchedAt;

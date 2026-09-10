@@ -3,10 +3,10 @@
   <Grid x:Name="Root" Width="256" Height="410" MouseRightButtonUp="ShowMenu" TextOptions.TextFormattingMode="Ideal">
     <Grid.LayoutTransform><ScaleTransform x:Name="WindowScale" ScaleX="1" ScaleY="1"/></Grid.LayoutTransform>
     <Grid x:Name="PetStage" Width="256" Height="256" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,8,0,0">
-      <Ellipse Fill="#1AB799D4" Width="104" Height="10" VerticalAlignment="Bottom" Margin="0,0,0,5"/>
-      <Image x:Name="PetImage" Width="256" Height="256" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" MouseLeftButtonDown="PetMouseDown" MouseMove="PetMouseMove" MouseLeftButtonUp="PetMouseUp" Cursor="Hand" ToolTip="点击摸头 · 按住拖动 · 右键设置" AutomationProperties.Name="桌宠角色，点击摸头，拖动改变位置"/>
+      <Ellipse x:Name="PetShadow" Fill="#1AB799D4" Width="104" Height="10" VerticalAlignment="Bottom" Margin="0,0,0,5"/>
+      <Image x:Name="PetImage" Width="256" Height="256" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" MouseLeftButtonDown="PetMouseDown" MouseMove="PetMouseMove" MouseLeftButtonUp="PetMouseUp" LostMouseCapture="PetLostCapture" Cursor="Hand" ToolTip="点击摸头 · 按住拖动 · 右键设置" AutomationProperties.Name="桌宠角色，点击摸头，拖动改变位置"/>
     </Grid>
-    <Grid x:Name="QuotaBubble" Width="160" Height="110" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="48,6,0,0">
+    <Canvas x:Name="QuotaBubble" Width="160" Height="110" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="48,6,0,0">
       <Border x:Name="QuotaCard" VerticalAlignment="Top" Width="160" Height="100" Padding="10,8" Background="#FFFCFF" CornerRadius="14" BorderBrush="#E6DBEF" BorderThickness="1" MouseLeftButtonDown="CardDrag">
         <Border.Effect><DropShadowEffect Color="#584271" BlurRadius="10" ShadowDepth="2" Opacity="0.12"/></Border.Effect>
         <Grid>
@@ -32,16 +32,11 @@
           <TextBlock x:Name="ResetText" Grid.Row="4" Text="正在读取…" FontSize="10" Foreground="#8F839D" VerticalAlignment="Center"/>
         </Grid>
       </Border>
-      <Path Data="M 72,99.5 L 80,109 L 88,99.5" Fill="#FFFCFF" Stroke="#E6DBEF" StrokeThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False"/>
-    </Grid>
+      <Path x:Name="QuotaTail" Data="M 72,99.5 L 80,109 L 88,99.5" Fill="#FFFCFF" Stroke="#E6DBEF" StrokeThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False"/>
+    </Canvas>
     <Border x:Name="SpeechBubble" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,242,6,0" MaxWidth="154" Background="#FFFCFF" BorderBrush="#E9DEEF" BorderThickness="1" CornerRadius="10" Padding="8,5" Visibility="Collapsed" IsHitTestVisible="False">
       <TextBlock x:Name="SpeechText" Text="加油呀 ♡" TextWrapping="Wrap" FontSize="10" LineHeight="14" Foreground="#9475AE"/>
     </Border>
     <Border x:Name="FocusBadge" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,306,6,0" Padding="9,5" Background="#FAF5FF" BorderBrush="#E4D4EE" BorderThickness="1" CornerRadius="10" Visibility="Collapsed"><StackPanel><TextBlock x:Name="FocusCaption" Text="陪你专注" FontSize="9" Foreground="#8F839D"/><TextBlock x:Name="FocusTimeText" Text="25:00" FontFamily="Segoe UI" FontSize="17" FontWeight="SemiBold"/></StackPanel></Border>
-    <StackPanel x:Name="ActionBar" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,5">
-      <Button x:Name="PatButton" Content="♡ 摸摸" Click="PatClick" FontSize="11" Padding="10,5" Margin="0,0,6,0" ToolTip="摸摸头" AutomationProperties.Name="摸摸"/>
-      <Button x:Name="FocusButton" Content="◷ 专注" Click="FocusClick" FontSize="11" Padding="10,5" Margin="0,0,6,0" ToolTip="开始 25 分钟专注计时" AutomationProperties.Name="专注计时"/>
-      <Button x:Name="SleepButton" Content="☾ 休息" Click="SleepClick" FontSize="11" Padding="10,5" ToolTip="休息时仍显示并刷新额度" AutomationProperties.Name="休息"/>
-    </StackPanel>
   </Grid>
 </Window>
