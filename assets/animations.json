@@ -1,0 +1,692 @@
+{
+  "source": "https://github.com/LorisYounger/VPet",
+  "commit": "2e99a42ebeff71d792118f2e8de744b773042f8d",
+  "animations": {
+    "idle": [
+      {
+        "file": "vpet/idle/000.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_000_125.png",
+        "gitBlob": "0e239873d3423fa898b9b0f514b020d09ac0d217"
+      },
+      {
+        "file": "vpet/idle/001.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_001_125.png",
+        "gitBlob": "ebbc1331a90073b66fd15a1e2cc0c39c926b901c"
+      },
+      {
+        "file": "vpet/idle/002.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_002_125.png",
+        "gitBlob": "7bad1f6fea1a4c9c7ce8656cd0fefe4c9ed7e905"
+      },
+      {
+        "file": "vpet/idle/003.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_003_125.png",
+        "gitBlob": "50b2b51cb1363d79847853ad81e6012b86b236b5"
+      },
+      {
+        "file": "vpet/idle/004.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_004_125.png",
+        "gitBlob": "ebbc1331a90073b66fd15a1e2cc0c39c926b901c"
+      },
+      {
+        "file": "vpet/idle/005.png",
+        "duration": 250,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_005_250.png",
+        "gitBlob": "0e239873d3423fa898b9b0f514b020d09ac0d217"
+      },
+      {
+        "file": "vpet/idle/006.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_006_125.png",
+        "gitBlob": "477c0dbabc3391929568025d17a7c7dded9e7e5f"
+      },
+      {
+        "file": "vpet/idle/007.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_007_125.png",
+        "gitBlob": "b2729b6475ddda7763d904c68574d2ec324e96cb"
+      },
+      {
+        "file": "vpet/idle/008.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_008_125.png",
+        "gitBlob": "84ee46ccb5877c30607d726c0a28702a48b2c9a5"
+      },
+      {
+        "file": "vpet/idle/009.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_009_125.png",
+        "gitBlob": "0170a6439889c35967bcba45c4da72730699f70a"
+      },
+      {
+        "file": "vpet/idle/010.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_010_125.png",
+        "gitBlob": "3bafc026487d4aaa4ede1c325be6efa0dfe60db3"
+      },
+      {
+        "file": "vpet/idle/011.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_011_125.png",
+        "gitBlob": "477c0dbabc3391929568025d17a7c7dded9e7e5f"
+      },
+      {
+        "file": "vpet/idle/012.png",
+        "duration": 250,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Default/Happy/1/循环A_012_250.png",
+        "gitBlob": "0e239873d3423fa898b9b0f514b020d09ac0d217"
+      }
+    ],
+    "pat": [
+      {
+        "file": "vpet/pat/000.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/A/_000_125.png",
+        "gitBlob": "302adbb66c0890540b338384a1b8ff81e9b19f9e"
+      },
+      {
+        "file": "vpet/pat/001.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/A/_001_125.png",
+        "gitBlob": "04e52c527be6f8b7e2bf902ca2a69001e553368b"
+      },
+      {
+        "file": "vpet/pat/002.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/A/_002_125.png",
+        "gitBlob": "3e8d59e9c277258cc1885a18b961ca25f29a0355"
+      },
+      {
+        "file": "vpet/pat/003.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/B/_000_125.png",
+        "gitBlob": "860552525f16d8f82a915afa0863c35549aa47f0"
+      },
+      {
+        "file": "vpet/pat/004.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/B/_001_125.png",
+        "gitBlob": "dc5c742b6e38a7098b6d15d044815ce335f6719b"
+      },
+      {
+        "file": "vpet/pat/005.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/B/_002_125.png",
+        "gitBlob": "2bbe620ab69c2dcc60360e977cf1fb55d485b1dc"
+      },
+      {
+        "file": "vpet/pat/006.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/B/_003_125.png",
+        "gitBlob": "6c04072e96e8d900c221ab2adf72789d82840f56"
+      },
+      {
+        "file": "vpet/pat/007.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/B/_004_125.png",
+        "gitBlob": "ffc1549ca733d7bb3c5f6b752964c084b7e29ad9"
+      },
+      {
+        "file": "vpet/pat/008.png",
+        "duration": 250,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/B/_005_250.png",
+        "gitBlob": "16683ea912efff333679625b409d51eff837f8b6"
+      },
+      {
+        "file": "vpet/pat/009.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/B/_006_125.png",
+        "gitBlob": "2bbe620ab69c2dcc60360e977cf1fb55d485b1dc"
+      },
+      {
+        "file": "vpet/pat/010.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/B/_007_125.png",
+        "gitBlob": "ffc1549ca733d7bb3c5f6b752964c084b7e29ad9"
+      },
+      {
+        "file": "vpet/pat/011.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/B/_008_125.png",
+        "gitBlob": "ddd1af6ba2d54a2b5528ffe4778db85f702f7545"
+      },
+      {
+        "file": "vpet/pat/012.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/B/_009_125.png",
+        "gitBlob": "2bbe620ab69c2dcc60360e977cf1fb55d485b1dc"
+      },
+      {
+        "file": "vpet/pat/013.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/B/_010_125.png",
+        "gitBlob": "6c04072e96e8d900c221ab2adf72789d82840f56"
+      },
+      {
+        "file": "vpet/pat/014.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/B/_011_125.png",
+        "gitBlob": "ffc1549ca733d7bb3c5f6b752964c084b7e29ad9"
+      },
+      {
+        "file": "vpet/pat/015.png",
+        "duration": 250,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/C/_000_250.png",
+        "gitBlob": "75e41b38ffa66c21caabc91a84bdcc4639d456b6"
+      },
+      {
+        "file": "vpet/pat/016.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Touch_Head/Happy/C/_001_125.png",
+        "gitBlob": "a82f82e171cf47cbd9c04eadaf9e7c5b5a999446"
+      }
+    ],
+    "meow": [
+      {
+        "file": "vpet/meow/000.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_000_125.png",
+        "gitBlob": "3ce1e6bc70ed800fd7e1169c5ada7a1df1544164"
+      },
+      {
+        "file": "vpet/meow/001.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_001_125.png",
+        "gitBlob": "92a3cca7f3c966f9cfdde4eeb3a1d17b3feab5b1"
+      },
+      {
+        "file": "vpet/meow/002.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_002_125.png",
+        "gitBlob": "69e598932527c47623d85599e2b3f6d5da681612"
+      },
+      {
+        "file": "vpet/meow/003.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_003_125.png",
+        "gitBlob": "19b97f6b00ead67cf07842e4931c20052544c75e"
+      },
+      {
+        "file": "vpet/meow/004.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_004_125.png",
+        "gitBlob": "3421a9a03c99b31c45b7f47a9cff049ac46654b5"
+      },
+      {
+        "file": "vpet/meow/005.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_005_125.png",
+        "gitBlob": "084753dd76a9711707dd3d41d59c48cb7c9b718c"
+      },
+      {
+        "file": "vpet/meow/006.png",
+        "duration": 500,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_006_500.png",
+        "gitBlob": "381cc3b96f02ff52ae6352f0e14d810c638f70a4"
+      },
+      {
+        "file": "vpet/meow/007.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_007_125.png",
+        "gitBlob": "3421a9a03c99b31c45b7f47a9cff049ac46654b5"
+      },
+      {
+        "file": "vpet/meow/008.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_008_125.png",
+        "gitBlob": "d75d29b4608efd3c5568b34039b38292fad1053f"
+      },
+      {
+        "file": "vpet/meow/009.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_009_125.png",
+        "gitBlob": "8a6f5db136639a596562b093901569eabccc81cc"
+      },
+      {
+        "file": "vpet/meow/010.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_010_125.png",
+        "gitBlob": "e6303722622dadb26e6db093e35e55feafc0f9ff"
+      },
+      {
+        "file": "vpet/meow/011.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_011_125.png",
+        "gitBlob": "139266461c22f42e51b78cf7f4599ebd9f6df11d"
+      },
+      {
+        "file": "vpet/meow/012.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_012_125.png",
+        "gitBlob": "e6303722622dadb26e6db093e35e55feafc0f9ff"
+      },
+      {
+        "file": "vpet/meow/013.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_013_125.png",
+        "gitBlob": "139266461c22f42e51b78cf7f4599ebd9f6df11d"
+      },
+      {
+        "file": "vpet/meow/014.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_014_125.png",
+        "gitBlob": "e6303722622dadb26e6db093e35e55feafc0f9ff"
+      },
+      {
+        "file": "vpet/meow/015.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_015_125.png",
+        "gitBlob": "ab4caddbcfe0933ae29d5556be44caff4fe3492c"
+      },
+      {
+        "file": "vpet/meow/016.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_016_125.png",
+        "gitBlob": "b3d3311fb552dc2d7321d16783fb4f441836f20e"
+      },
+      {
+        "file": "vpet/meow/017.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_017_125.png",
+        "gitBlob": "69e598932527c47623d85599e2b3f6d5da681612"
+      },
+      {
+        "file": "vpet/meow/018.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_018_125.png",
+        "gitBlob": "92a3cca7f3c966f9cfdde4eeb3a1d17b3feab5b1"
+      },
+      {
+        "file": "vpet/meow/019.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/IDEL/Meow/Happy/1/开心一_019_125.png",
+        "gitBlob": "3ce1e6bc70ed800fd7e1169c5ada7a1df1544164"
+      }
+    ],
+    "sleepIn": [
+      {
+        "file": "vpet/sleepIn/000.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/A_Happy/happysleep_001_125.png",
+        "gitBlob": "ef008cf314fd04fb4d729507452819b9cdb12107"
+      },
+      {
+        "file": "vpet/sleepIn/001.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/A_Happy/happysleep_002_125.png",
+        "gitBlob": "85c3b8013f54ef14daa0d6f608b13d5ff45a0bd6"
+      },
+      {
+        "file": "vpet/sleepIn/002.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/A_Happy/happysleep_003_125.png",
+        "gitBlob": "e18483282e9d74b9ef546dc0cefe5a6ab8b187f8"
+      },
+      {
+        "file": "vpet/sleepIn/003.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/A_Happy/happysleep_004_125.png",
+        "gitBlob": "33c2f6cb415e0b6c3e47f9238fef15ad7e8ba6ba"
+      }
+    ],
+    "sleep": [
+      {
+        "file": "vpet/sleep/000.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/B_Happy/happysleep_000_125.png",
+        "gitBlob": "2359c09177d0602e4b2d9f7478a21dc7b15190c2"
+      },
+      {
+        "file": "vpet/sleep/001.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/B_Happy/happysleep_001_125.png",
+        "gitBlob": "f69fdf5520d0e66610dac980bfba68bc4a184e0b"
+      },
+      {
+        "file": "vpet/sleep/002.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/B_Happy/happysleep_002_125.png",
+        "gitBlob": "313d7ca8e6ad902710cc0c766006ea5614d5bfd2"
+      },
+      {
+        "file": "vpet/sleep/003.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/B_Happy/happysleep_003_125.png",
+        "gitBlob": "d414477c0fec435a2d817f294b0d8571f9aec51b"
+      },
+      {
+        "file": "vpet/sleep/004.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/B_Happy/happysleep_004_125.png",
+        "gitBlob": "2be034d8fa678173b88af1ab7ad091158de23cf8"
+      },
+      {
+        "file": "vpet/sleep/005.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/B_Happy/happysleep_005_125.png",
+        "gitBlob": "d188d57b93f9f5b72e1976b52210869706dba22a"
+      }
+    ],
+    "sleepOut": [
+      {
+        "file": "vpet/sleepOut/000.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/C_Happy/happysleep_000_125.png",
+        "gitBlob": "0bb5cfb6e4b97a67f9261a565c558fe5de15bf04"
+      },
+      {
+        "file": "vpet/sleepOut/001.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/C_Happy/happysleep_001_125.png",
+        "gitBlob": "53a5475c8ad318bc9ad9639baaa4d7c36cf6b474"
+      },
+      {
+        "file": "vpet/sleepOut/002.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/C_Happy/happysleep_002_125.png",
+        "gitBlob": "30496e8cc4971a88ce514de36948d7f2ead52f41"
+      },
+      {
+        "file": "vpet/sleepOut/003.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/C_Happy/happysleep_003_125.png",
+        "gitBlob": "0eb134e36ca4288b841d63e8f6e7cd5a9cc0cdcb"
+      },
+      {
+        "file": "vpet/sleepOut/004.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/C_Happy/happysleep_004_125.png",
+        "gitBlob": "5d5fd0f18996d964022705718f8e168f3a5facac"
+      },
+      {
+        "file": "vpet/sleepOut/005.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/C_Happy/happysleep_005_125.png",
+        "gitBlob": "0966085439a72af7e43969fb09dd821196d88f6b"
+      },
+      {
+        "file": "vpet/sleepOut/006.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/Sleep/C_Happy/happysleep_006_125.png",
+        "gitBlob": "548d47f0853bf64bd118e83634fc557479e47453"
+      }
+    ],
+    "focusIn": [
+      {
+        "file": "vpet/focusIn/000.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/A_Nomal/reading1A_000_125.png",
+        "gitBlob": "4fed07e989ce8e3540c9de7e79309cc9c95ab518"
+      },
+      {
+        "file": "vpet/focusIn/001.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/A_Nomal/reading1A_001_125.png",
+        "gitBlob": "70f8e3e1ef9b139d6ec02812b4c2cb95c48c1aa2"
+      },
+      {
+        "file": "vpet/focusIn/002.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/A_Nomal/reading1A_002_125.png",
+        "gitBlob": "2350e39475af2aa6cb4668959ee9b5e6b720acd4"
+      },
+      {
+        "file": "vpet/focusIn/003.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/A_Nomal/reading1A_003_125.png",
+        "gitBlob": "338e3866c22776870c1064c29c7645f0d635f2cc"
+      },
+      {
+        "file": "vpet/focusIn/004.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/A_Nomal/reading1A_004_125.png",
+        "gitBlob": "673f8897580e516d4186443c73ec21713a9353dc"
+      },
+      {
+        "file": "vpet/focusIn/005.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/A_Nomal/reading1A_005_125.png",
+        "gitBlob": "1a48e5454327cd70755bf4a8baaf2ce6290787c5"
+      },
+      {
+        "file": "vpet/focusIn/006.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/A_Nomal/reading1A_006_125.png",
+        "gitBlob": "0362f8362849b4dded95debb9bdf60841927c2a0"
+      },
+      {
+        "file": "vpet/focusIn/007.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/A_Nomal/reading1A_007_125.png",
+        "gitBlob": "b7996e15da3fe83e6a7b57fed22fce02b23ad7c9"
+      },
+      {
+        "file": "vpet/focusIn/008.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/A_Nomal/reading1A_008_125.png",
+        "gitBlob": "05bba464d917dddf03fda5b1f945e26da475f0e9"
+      },
+      {
+        "file": "vpet/focusIn/009.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/A_Nomal/reading1A_009_125.png",
+        "gitBlob": "99d95acd18d908ff167d8184346bfd5f4acb23bc"
+      },
+      {
+        "file": "vpet/focusIn/010.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/A_Nomal/reading1A_010_125.png",
+        "gitBlob": "f4ca0806fab6b3d86de20301041575718b56757e"
+      },
+      {
+        "file": "vpet/focusIn/011.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/A_Nomal/reading1A_011_125.png",
+        "gitBlob": "f4f9638d00509fc070bd9bb990e459f20cca4f5a"
+      }
+    ],
+    "focus": [
+      {
+        "file": "vpet/focus/000.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/B_1_Nomal/reading1B_000_125.png",
+        "gitBlob": "27d2bad1ef1310cb986eedda75aef10215388b93"
+      },
+      {
+        "file": "vpet/focus/001.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/B_1_Nomal/reading1B_001_125.png",
+        "gitBlob": "e59917a933091d7a82e89b86a48247739bbe3e2a"
+      },
+      {
+        "file": "vpet/focus/002.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/B_1_Nomal/reading1B_002_125.png",
+        "gitBlob": "8a481ce639103a725b861e9507080c2b59bdad93"
+      },
+      {
+        "file": "vpet/focus/003.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/B_1_Nomal/reading1B_003_125.png",
+        "gitBlob": "27d2bad1ef1310cb986eedda75aef10215388b93"
+      },
+      {
+        "file": "vpet/focus/004.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/B_1_Nomal/reading1B_004_125.png",
+        "gitBlob": "e59917a933091d7a82e89b86a48247739bbe3e2a"
+      },
+      {
+        "file": "vpet/focus/005.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/B_1_Nomal/reading1B_005_125.png",
+        "gitBlob": "f78295d7069a2826e09362eb9ad23caf93883b08"
+      },
+      {
+        "file": "vpet/focus/006.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/B_1_Nomal/reading1B_006_125.png",
+        "gitBlob": "f4f9638d00509fc070bd9bb990e459f20cca4f5a"
+      },
+      {
+        "file": "vpet/focus/007.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/B_1_Nomal/reading1B_007_125.png",
+        "gitBlob": "9fd35f63dff51d17f02f65ac540926f218d770d0"
+      },
+      {
+        "file": "vpet/focus/008.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/B_1_Nomal/reading1B_008_125.png",
+        "gitBlob": "27d2bad1ef1310cb986eedda75aef10215388b93"
+      },
+      {
+        "file": "vpet/focus/009.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/B_1_Nomal/reading1B_009_125.png",
+        "gitBlob": "e59917a933091d7a82e89b86a48247739bbe3e2a"
+      },
+      {
+        "file": "vpet/focus/010.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/B_1_Nomal/reading1B_010_125.png",
+        "gitBlob": "8a481ce639103a725b861e9507080c2b59bdad93"
+      }
+    ],
+    "focusOut": [
+      {
+        "file": "vpet/focusOut/000.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/C_Nomal/看书退出C_000_125.png",
+        "gitBlob": "4cab19491c6b4e17a5b915b70b44b0747dc3f3ea"
+      },
+      {
+        "file": "vpet/focusOut/001.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/C_Nomal/看书退出C_001_125.png",
+        "gitBlob": "99d95acd18d908ff167d8184346bfd5f4acb23bc"
+      },
+      {
+        "file": "vpet/focusOut/002.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/C_Nomal/看书退出C_002_125.png",
+        "gitBlob": "6912515c97af695cde0fb480c2b67e87b46538cb"
+      },
+      {
+        "file": "vpet/focusOut/003.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/C_Nomal/看书退出C_003_125.png",
+        "gitBlob": "b22d7a7f139064063278ccbedfcf850ae7b9f6c0"
+      },
+      {
+        "file": "vpet/focusOut/004.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/C_Nomal/看书退出C_004_125.png",
+        "gitBlob": "447f8888c24f3d90ec91fe6567d7914d68dcaed3"
+      },
+      {
+        "file": "vpet/focusOut/005.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/C_Nomal/看书退出C_005_125.png",
+        "gitBlob": "45e28fdb19bf65188d04b71fff5e057ee24ef43a"
+      },
+      {
+        "file": "vpet/focusOut/006.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/C_Nomal/看书退出C_006_125.png",
+        "gitBlob": "3e0ebf12a4b0df0f3cd4c49decc7e39bd3318ef7"
+      },
+      {
+        "file": "vpet/focusOut/007.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/C_Nomal/看书退出C_007_125.png",
+        "gitBlob": "e5105fbb5dbaf0c9e144f1a3835e0909aae7e894"
+      },
+      {
+        "file": "vpet/focusOut/008.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/C_Nomal/看书退出C_008_125.png",
+        "gitBlob": "08821820e7e9209199377a732a58aed28e55d165"
+      },
+      {
+        "file": "vpet/focusOut/009.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/C_Nomal/看书退出C_009_125.png",
+        "gitBlob": "36018fdb3809accef63a81db3fdacd39864186e2"
+      },
+      {
+        "file": "vpet/focusOut/010.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/WORK/Study/C_Nomal/看书退出C_010_125.png",
+        "gitBlob": "3b45ea90af901b279e814bedfca176cd23d48ad1"
+      }
+    ],
+    "walk": [
+      {
+        "file": "vpet/walk/000.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/MOVE/walk.left.faster/B_Happy/哈皮左走_000_125.png",
+        "gitBlob": "b207f1cc4c66711d5683d6de938054b6afc98ac4"
+      },
+      {
+        "file": "vpet/walk/001.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/MOVE/walk.left.faster/B_Happy/哈皮左走_001_125.png",
+        "gitBlob": "71ff12517a9037f2401f6f2351e0e6e614d5f83a"
+      },
+      {
+        "file": "vpet/walk/002.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/MOVE/walk.left.faster/B_Happy/哈皮左走_002_125.png",
+        "gitBlob": "4440065ac67e3191e7d2109a807528f859d60dc6"
+      },
+      {
+        "file": "vpet/walk/003.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/MOVE/walk.left.faster/B_Happy/哈皮左走_003_125.png",
+        "gitBlob": "018ccc032e2223c8601a23ab91208985cc163ad7"
+      },
+      {
+        "file": "vpet/walk/004.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/MOVE/walk.left.faster/B_Happy/哈皮左走_004_125.png",
+        "gitBlob": "4440065ac67e3191e7d2109a807528f859d60dc6"
+      },
+      {
+        "file": "vpet/walk/005.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/MOVE/walk.left.faster/B_Happy/哈皮左走_005_125.png",
+        "gitBlob": "b207f1cc4c66711d5683d6de938054b6afc98ac4"
+      },
+      {
+        "file": "vpet/walk/006.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/MOVE/walk.left.faster/B_Happy/哈皮左走_006_125.png",
+        "gitBlob": "1c4397d6378631d5d369d4b2913dd43c31efefbc"
+      },
+      {
+        "file": "vpet/walk/007.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/MOVE/walk.left.faster/B_Happy/哈皮左走_007_125.png",
+        "gitBlob": "d6e4f278d3c1652501f79431f8133eed3dbc0018"
+      },
+      {
+        "file": "vpet/walk/008.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/MOVE/walk.left.faster/B_Happy/哈皮左走_008_125.png",
+        "gitBlob": "f571a07f42443705b9763c435f85ed882baa7d84"
+      },
+      {
+        "file": "vpet/walk/009.png",
+        "duration": 125,
+        "sourcePath": "VPet-Simulator.Windows/mod/0000_core/pet/vup/MOVE/walk.left.faster/B_Happy/哈皮左走_009_125.png",
+        "gitBlob": "7d7546c161a268d7bbfbe19cc967c276c7518863"
+      }
+    ]
+  }
+}

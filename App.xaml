@@ -1,0 +1,20 @@
+<Application x:Class="Momo.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" ShutdownMode="OnMainWindowClose">
+  <Application.Resources>
+    <SolidColorBrush x:Key="Ink" Color="#484056"/>
+    <SolidColorBrush x:Key="Muted" Color="#8F839D"/>
+    <SolidColorBrush x:Key="Accent" Color="#9C79C7"/>
+    <Style TargetType="TextBlock"><Setter Property="Foreground" Value="{StaticResource Ink}"/><Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI"/></Style>
+    <Style TargetType="Button">
+      <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei UI"/>
+      <Setter Property="FontSize" Value="12"/><Setter Property="Foreground" Value="{StaticResource Ink}"/>
+      <Setter Property="Background" Value="#F5EFFA"/><Setter Property="BorderBrush" Value="#E8DDF1"/>
+      <Setter Property="BorderThickness" Value="1"/><Setter Property="Padding" Value="12,7"/><Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+        <Border x:Name="Chrome" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="13" Padding="{TemplateBinding Padding}"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+        <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Chrome" Property="Background" Value="#EADDF5"/></Trigger><Trigger Property="IsPressed" Value="True"><Setter TargetName="Chrome" Property="Opacity" Value="0.65"/></Trigger><Trigger Property="IsEnabled" Value="False"><Setter TargetName="Chrome" Property="Opacity" Value="0.45"/></Trigger></ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style TargetType="ContextMenu"><Setter Property="FontFamily" Value="Microsoft YaHei UI"/><Setter Property="FontSize" Value="13"/><Setter Property="Background" Value="#FFFCFF"/><Setter Property="Foreground" Value="#484056"/><Setter Property="BorderBrush" Value="#E8DDF1"/><Setter Property="Padding" Value="5"/></Style>
+    <Style TargetType="ToolTip"><Setter Property="FontFamily" Value="Microsoft YaHei UI"/><Setter Property="MaxWidth" Value="340"/></Style>
+  </Application.Resources>
+</Application>

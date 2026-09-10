@@ -1,0 +1,17 @@
+bin/
+obj/
+dist/
+artifacts/
+vpet-tree.json
+vpet-readme.md
+*.user
+*.log
+*.lnk
+.vs/
+.env
+.env.*
+auth.json
+settings.json
+*.pfx
+*.key
+*.pem
