@@ -10,6 +10,7 @@ public sealed class PetSettings
     public double? Top { get; set; }
     public double Scale { get; set; } = 1;
     public bool Compact { get; set; }
+    public bool ShowQuotaBubble { get; set; } = true;
     public bool AlwaysOnTop { get; set; } = true;
     public bool LowUsageNotification { get; set; } = true;
     public int CompletedFocus { get; set; }

@@ -1,12 +1,12 @@
 # Momo · Codex 桌宠
 
-日系萌系 Windows 桌宠，使用 VPet 原版透明 PNG 序列动画。**160 × 100 的头侧小气泡**常驻显示 Codex 本周剩余 / 已用、credits 余额、同步状态与重置时间。
+日系萌系 Windows 桌宠，使用 VPet 原版透明 PNG 序列动画。**160 × 100 的头顶小气泡**默认显示 Codex 本周剩余 / 已用、credits 余额、同步状态与重置时间，可在角色右键菜单或托盘关闭和重新开启。
 
 An anime-style Windows desktop companion with a compact speech bubble showing Codex weekly quota and credit balance. Built with .NET 8 / WPF; reuses the local Codex App Server sign-in. This is an independent community project.
 
-<img src="docs/images/desktop.png" width="420" alt="Momo 头侧额度气泡，演示数据" />
+<img src="docs/images/desktop.png" width="420" alt="Momo 头顶额度气泡，演示数据" />
 
-上图使用合成演示数据，不含真实账号的额度信息。默认界面没有名称栏，主文字 10–13 px，辅助文字 9 px。完整窗口从旧版 340 × 552 缩为 350 × 302（逻辑像素），角色保持 256 × 256 的绘制区域；小巧模式为 308 × 238，气泡仍保持可读尺寸。
+上图使用合成演示数据，不含真实账号的额度信息。默认界面没有名称栏，主文字 10–13 px，辅助文字 9 px。气泡居中放在角色头顶，默认开启，重启后记住选择。完整窗口为 350 × 410（逻辑像素），角色保持 256 × 256 的绘制区域；小巧模式为 308 × 346，气泡仍保持可读尺寸。关闭气泡会收起上方空间并保持角色位置，屏幕边缘会自动调整。
 
 ## 启动
 
@@ -29,7 +29,8 @@ An anime-style Windows desktop companion with a compact speech bubble showing Co
 | 单击角色 / ♡ 摸摸 | 摸头动画与简短互动 |
 | 拖动角色或卡片空白处 | 移动桌宠，记住位置 |
 | ◷ 专注 | 开始 25 分钟专注，角色陪读；再次点击结束 |
-| ☾ 休息 | 休息动画，额度卡片仍显示并刷新 |
+| ☾ 休息 | 休息动画，额度继续刷新，气泡遵循显示开关 |
+| 右键角色 / 托盘 → 显示额度气泡 | 关闭或重新开启头顶气泡，记住选择 |
 | 右键角色 / 卡片或点 ··· | 查看额度详情、置顶、大小、小巧模式、开机启动、素材说明 |
 | Ctrl+Alt+M | 显示 / 隐藏桌宠（快捷键注册成功时可用） |
 | 双击系统托盘图标 | 找回桌宠 |
@@ -47,7 +48,7 @@ An anime-style Windows desktop companion with a compact speech bubble showing Co
 - 每次读完结束自己的子进程，不停止用户的 Codex，不触碰其运行中的任务。
 - 断网 / 读取失败保留内存中的上次数据并标记「离线」；悬停同步状态可看最近成功同步时间，详情窗口也会注明旧数据。超过两分钟的数据同样标记离线。启动时不会拿旧缓存假装新数据。
 - 服务未返回的数字显示「— / 未提供」，不会伪装成余额为零。应用不会自动购买额度或兑换重置次数。
-- 配置保存到 `%LOCALAPPDATA%\MomoCodexPet\settings.json`，包括位置、大小、提醒开关和完成专注次数。账号余额不写进配置。
+- 配置保存到 `%LOCALAPPDATA%\MomoCodexPet\settings.json`，包括位置、大小、气泡显示开关、提醒开关和完成专注次数。账号余额不写进配置。
 - 若未自动发现 Codex，可设置用户环境变量 `MOMO_CODEX_PATH` 为真实的 `codex.exe` 绝对路径。也会尊重 Codex 自身使用的 `CODEX_HOME`。
 - 如果读取失败，请先在 Codex 中确认 ChatGPT 账号已登录，随后点击 ↻；纯 API key 登录通常无法读取订阅周额度。
 

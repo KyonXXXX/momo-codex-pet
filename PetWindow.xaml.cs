@@ -55,6 +55,10 @@ public partial class PetWindow : Window
         var trayMenu = new Forms.ContextMenuStrip();
         trayMenu.Items.Add("显示桌宠", null, (_, _) => Dispatcher.Invoke(ShowPet));
         trayMenu.Items.Add("立即刷新额度", null, (_, _) => Dispatcher.InvokeAsync(async () => await RefreshAsync()));
+        var bubbleToggle = new Forms.ToolStripMenuItem("显示额度气泡");
+        bubbleToggle.Click += (_, _) => Dispatcher.Invoke(ToggleQuotaBubble);
+        trayMenu.Opening += (_, _) => bubbleToggle.Checked = _settings.ShowQuotaBubble;
+        trayMenu.Items.Add(bubbleToggle);
         trayMenu.Items.Add("回到屏幕右下角", null, (_, _) => Dispatcher.Invoke(() => { ShowPet(); ResetPosition(); }));
         trayMenu.Items.Add(new Forms.ToolStripSeparator());
         trayMenu.Items.Add("退出 Momo", null, (_, _) => Dispatcher.Invoke(Close));
@@ -238,18 +242,30 @@ public partial class PetWindow : Window
     {
         double spriteSize = _settings.Compact ? 192 : 256;
         PetStage.Width = PetStage.Height = PetImage.Width = PetImage.Height = spriteSize;
+        double bubbleSpace = _settings.ShowQuotaBubble ? 108 : 0;
+        PetStage.Margin = new Thickness(0, 8 + bubbleSpace, 0, 0);
+        QuotaBubble.Visibility = _settings.ShowQuotaBubble ? Visibility.Visible : Visibility.Collapsed;
         double bubbleLeft = Math.Round(spriteSize * 0.65625);
-        QuotaBubble.Margin = new Thickness(bubbleLeft, 24, 0, 0);
-        SpeechBubble.Margin = new Thickness(bubbleLeft + 12, 134, 0, 0);
-        FocusBadge.Margin = new Thickness(bubbleLeft + 20, Math.Max(180, spriteSize - 58), 0, 0);
+        QuotaBubble.Margin = new Thickness((spriteSize - 160) / 2, 6, 0, 0);
+        SpeechBubble.Margin = new Thickness(bubbleLeft + 12, 134 + bubbleSpace, 0, 0);
+        FocusBadge.Margin = new Thickness(bubbleLeft + 20, Math.Max(180, spriteSize - 58) + bubbleSpace, 0, 0);
         ActionBar.Margin = new Thickness(Math.Max(4, (spriteSize - 212) / 2), 0, 0, 5);
         Root.Width = bubbleLeft + 182;
-        Root.Height = spriteSize + 46;
+        Root.Height = spriteSize + 46 + bubbleSpace;
         var area = WorkingArea();
         double scale = Math.Min(_settings.Scale, Math.Min((area.Width - 20) / Root.Width, (area.Height - 20) / Root.Height));
         WindowScale.ScaleX = scale; WindowScale.ScaleY = scale;
         Width = Root.Width * scale; Height = Root.Height * scale;
         ClampPosition();
+    }
+    private void ToggleQuotaBubble()
+    {
+        double petTop = Top + PetStage.Margin.Top * WindowScale.ScaleY;
+        _settings.ShowQuotaBubble = !_settings.ShowQuotaBubble;
+        ApplySize();
+        // Keep the character in place while the space above it opens or closes.
+        Top = petTop - PetStage.Margin.Top * WindowScale.ScaleY;
+        ClampPosition(); SavePosition();
     }
     private Rect WorkingArea()
     {
@@ -274,12 +290,13 @@ public partial class PetWindow : Window
 
     private void MenuClick(object sender, RoutedEventArgs e) => OpenMenu();
     private void ShowMenu(object sender, MouseButtonEventArgs e) { OpenMenu(); e.Handled = true; }
-    private void OpenMenu()
+    private ContextMenu OpenMenu()
     {
         var menu = new ContextMenu();
         Add(menu, "立即刷新额度", async () => await RefreshAsync());
         Add(menu, "查看所有额度与同步详情", ShowDetails);
         menu.Items.Add(new Separator());
+        Add(menu, "显示额度气泡", ToggleQuotaBubble, _settings.ShowQuotaBubble);
         Add(menu, "始终置顶", () => { _settings.AlwaysOnTop = !Topmost; Topmost = _settings.AlwaysOnTop; _settings.Save(); }, Topmost);
         Add(menu, "小巧模式", () => { _settings.Compact = !_settings.Compact; ApplySize(); SavePosition(); }, _settings.Compact);
         var sizeMenu = new MenuItem { Header = "桌宠大小" };
@@ -293,7 +310,9 @@ public partial class PetWindow : Window
         Add(menu, "素材来源与使用说明", ShowAbout);
         Add(menu, "隐藏到托盘" + (_hotkeyRegistered ? "    Ctrl+Alt+M" : ""), () => { Hide(); _animation.Pause(true); });
         Add(menu, "退出桌宠", Close);
-        menu.PlacementTarget = MenuButton; menu.IsOpen = true;
+        menu.PlacementTarget = QuotaBubble.IsVisible ? (UIElement)MenuButton : PetImage;
+        menu.IsOpen = true;
+        return menu;
     }
     private static void Add(ContextMenu menu, string title, Action action, bool? check = null)
     { var item = new MenuItem { Header = title }; if (check is bool enabled) { item.IsCheckable = true; item.IsChecked = enabled; } item.Click += (_, _) => action(); menu.Items.Add(item); }
@@ -425,8 +444,22 @@ public partial class PetWindow : Window
         _usage = liveUsage; RenderUsage();
         Assert(_usage?.Main?.Weekly is not null && !_failed, _args.Contains("--demo") ? "synthetic demo data available for public screenshots" : "live Codex data available for local verification");
         Assert(QuotaCard.ActualWidth == 160 && QuotaCard.ActualHeight == 100, "quota bubble is 160 x 100 logical pixels");
-        Assert(Root.ActualHeight <= 302, "new layout removes the old 258-pixel header region");
-        Assert(QuotaCard.TransformToAncestor(Root).Transform(new Point()).X >= PetImage.ActualWidth * .68, "quota bubble sits outside the standing character's face");
+        var cardOrigin = QuotaCard.TransformToAncestor(Root).Transform(new Point());
+        Assert(cardOrigin.Y + QuotaCard.ActualHeight <= PetStage.Margin.Top && Math.Abs(cardOrigin.X + 80 - PetStage.Width / 2) < 1, "quota bubble is centered above the character without covering it");
+        Assert(_settings.ShowQuotaBubble && QuotaBubble.IsVisible, "quota bubble is enabled by default");
+        double petScreenTop = Top + PetStage.Margin.Top * WindowScale.ScaleY;
+        double visibleHeight = Root.Height;
+        var toggleMenu = OpenMenu();
+        var toggleItem = toggleMenu.Items.OfType<MenuItem>().Single(item => Equals(item.Header, "显示额度气泡"));
+        toggleItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); toggleMenu.IsOpen = false; UpdateLayout();
+        Assert(!QuotaBubble.IsVisible && !_settings.ShowQuotaBubble && Root.Height == visibleHeight - 108, "menu hides bubble and reclaims its space");
+        Assert(Math.Abs(Top + PetStage.Margin.Top * WindowScale.ScaleY - petScreenTop) < 1, "hiding bubble keeps character in place");
+        toggleMenu = OpenMenu();
+        Assert(toggleMenu.PlacementTarget == PetImage, "settings menu remains accessible on character with bubble hidden");
+        toggleItem = toggleMenu.Items.OfType<MenuItem>().Single(item => Equals(item.Header, "显示额度气泡"));
+        Assert(!toggleItem.IsChecked, "hidden bubble menu reflects saved choice");
+        toggleItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); toggleMenu.IsOpen = false; UpdateLayout();
+        Assert(QuotaBubble.IsVisible && _settings.ShowQuotaBubble && Root.Height == visibleHeight, "character menu restores quota bubble");
         Assert(UsageFill.ActualWidth <= UsageTrack.ActualWidth, "usage bar remains inside its resized track");
         _bubbleTimer.Stop(); SpeechBubble.Visibility = Visibility.Collapsed;
         foreach (string state in new[] { "idle", "pat", "focus", "sleep" })

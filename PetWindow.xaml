@@ -6,8 +6,8 @@
       <Ellipse Fill="#1AB799D4" Width="104" Height="10" VerticalAlignment="Bottom" Margin="0,0,0,5"/>
       <Image x:Name="PetImage" Width="256" Height="256" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" MouseLeftButtonDown="PetMouseDown" MouseMove="PetMouseMove" MouseLeftButtonUp="PetMouseUp" Cursor="Hand" ToolTip="点击摸头 · 按住拖动 · 右键设置" AutomationProperties.Name="桌宠角色，点击摸头，拖动改变位置"/>
     </Grid>
-    <Grid x:Name="QuotaBubble" Width="170" Height="100" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="168,24,0,0">
-      <Border x:Name="QuotaCard" Margin="10,0,0,0" Width="160" Height="100" Padding="10,8" Background="#FFFCFF" CornerRadius="14" BorderBrush="#E6DBEF" BorderThickness="1" MouseLeftButtonDown="CardDrag">
+    <Grid x:Name="QuotaBubble" Width="160" Height="110" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="48,6,0,0">
+      <Border x:Name="QuotaCard" VerticalAlignment="Top" Width="160" Height="100" Padding="10,8" Background="#FFFCFF" CornerRadius="14" BorderBrush="#E6DBEF" BorderThickness="1" MouseLeftButtonDown="CardDrag">
         <Border.Effect><DropShadowEffect Color="#584271" BlurRadius="10" ShadowDepth="2" Opacity="0.12"/></Border.Effect>
         <Grid>
           <Grid.RowDefinitions><RowDefinition Height="16"/><RowDefinition Height="22"/><RowDefinition Height="4"/><RowDefinition Height="22"/><RowDefinition Height="16"/></Grid.RowDefinitions>
@@ -32,7 +32,7 @@
           <TextBlock x:Name="ResetText" Grid.Row="4" Text="正在读取…" FontSize="10" Foreground="#8F839D" VerticalAlignment="Center"/>
         </Grid>
       </Border>
-      <Path Data="M 10,54 L 0,65 L 10,65" Fill="#FFFCFF" Stroke="#E6DBEF" StrokeThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False"/>
+      <Path Data="M 72,99.5 L 80,109 L 88,99.5" Fill="#FFFCFF" Stroke="#E6DBEF" StrokeThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False"/>
     </Grid>
     <Border x:Name="SpeechBubble" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="180,134,0,0" MaxWidth="154" Background="#FFFCFF" BorderBrush="#E9DEEF" BorderThickness="1" CornerRadius="10" Padding="8,5" Visibility="Collapsed" IsHitTestVisible="False">
       <TextBlock x:Name="SpeechText" Text="加油呀 ♡" TextWrapping="Wrap" FontSize="10" LineHeight="14" Foreground="#9475AE"/>

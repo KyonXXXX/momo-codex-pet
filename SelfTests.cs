@@ -17,6 +17,12 @@ internal static class SelfTests
         void Check(string name, Action test) { try { test(); report.Add("PASS " + name); } catch (Exception ex) { failures++; report.Add("FAIL " + name + ": " + ex.Message); } }
         static void Equal<T>(T actual, T expected) { if (!Equals(actual, expected)) throw new Exception($"Expected {expected}, got {actual}"); }
         static UsageSnapshot Parse(string json) { using var doc = JsonDocument.Parse(json); return UsageSnapshot.Parse(doc.RootElement, DateTimeOffset.UtcNow); }
+        Check("Bubble defaults on for existing settings and preserves an explicit off choice", () =>
+        {
+            Equal(JsonSerializer.Deserialize<PetSettings>("{\"Scale\":1}")!.ShowQuotaBubble, true);
+            var settings = new PetSettings { ShowQuotaBubble = false };
+            Equal(JsonSerializer.Deserialize<PetSettings>(JsonSerializer.Serialize(settings))!.ShowQuotaBubble, false);
+        });
         Check("Weekly quota in primary slot, exact decimal credits", () =>
         {
             var data = Parse("""{"rateLimitsByLimitId":{"codex":{"primary":{"usedPercent":24,"windowDurationMins":10080,"resetsAt":1893499200},"secondary":null,"credits":{"balance":"1234.5678901234","unlimited":false}}}}""");
