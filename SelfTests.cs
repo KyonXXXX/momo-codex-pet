@@ -29,6 +29,19 @@ internal static class SelfTests
             Equal(state.Calculate(week,now.AddHours(6),TimeZoneInfo.Utc,"codex")!.Budget>12,true);
             Equal(state.Calculate(week,now.AddHours(6),TimeZoneInfo.Utc,"codex",false)!.Budget,12d);
         });
+        Check("Reset-time jitter preserves today's accumulated usage across refresh and restart", () =>
+        {
+            var at = new DateTimeOffset(2026,9,11,12,0,0,TimeSpan.Zero);
+            var week = new QuotaWindow(36,10080,at.AddDays(5)); var state = new DailyUsage();
+            state.Observe(week,at,TimeZoneInfo.Utc,"codex");
+            state.Observe(week with { UsedPercent = 37, ResetsAt = week.ResetsAt!.Value.AddSeconds(1) },at.AddMinutes(1),TimeZoneInfo.Utc,"codex");
+            state = JsonSerializer.Deserialize<DailyUsage>(JsonSerializer.Serialize(state))!;
+            state.Observe(week with { UsedPercent = 39 },at.AddMinutes(2),TimeZoneInfo.Utc,"codex");
+            Equal(state.UsedToday,3d); Equal(state.StartedAt,at);
+            Equal(state.Calculate(week with {UsedPercent=39,ResetsAt=week.ResetsAt!.Value.AddSeconds(1)},at.AddMinutes(2),TimeZoneInfo.Utc,"codex")!.Used,3d);
+            state.Observe(week with {UsedPercent=0,ResetsAt=at.AddDays(7)},at.AddMinutes(3),TimeZoneInfo.Utc,"codex");
+            Equal(state.UsedToday,0d);
+        });
         Check("Daily record survives restart and duplicate samples do not double count", () =>
         {
             var now=DateTimeOffset.UtcNow;var week=new QuotaWindow(20,10080,now.AddDays(5));var s=new DailyUsage();

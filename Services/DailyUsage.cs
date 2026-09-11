@@ -21,6 +21,8 @@ public sealed class DailyUsage
     public double UsedToday { get; set; }
     public bool Partial { get; set; } = true;
     private static string LocalDay(DateTimeOffset at, TimeZoneInfo zone) => TimeZoneInfo.ConvertTime(at, zone).ToString("yyyy-MM-dd");
+    // The server's reset epoch can jitter by a second between reads of the same window.
+    private static bool SameWindow(DateTimeOffset a, DateTimeOffset b) => Math.Abs((a - b).TotalSeconds) <= 120;
     private static bool Valid(QuotaWindow? week, DateTimeOffset now) => week?.Minutes == 10080 && week.UsedPercent is double used && double.IsFinite(used) && used >= 0 && used <= 100 && week.ResetsAt is {} reset && reset > now && reset - now <= TimeSpan.FromDays(7.01);
 
     public void Observe(QuotaWindow? week, DateTimeOffset at, TimeZoneInfo zone, string scope)
@@ -28,7 +30,7 @@ public sealed class DailyUsage
         if (!Valid(week, at) || at < LastSample) return;
         double used = week!.UsedPercent!.Value;
         string day = LocalDay(at, zone);
-        bool cycleChanged = Reset != week.ResetsAt || Scope != scope;
+        bool cycleChanged = !SameWindow(Reset, week.ResetsAt!.Value) || Scope != scope;
         bool corrected = used < LastUsed - .000001;
         if (day != Day || cycleChanged || corrected)
         {
@@ -39,12 +41,12 @@ public sealed class DailyUsage
             UsedToday = 0; StartedAt = at;
         }
         else UsedToday += Math.Max(0, used - LastUsed);
-        LastUsed = used; LastSample = at;
+        Reset = week.ResetsAt!.Value; LastUsed = used; LastSample = at;
     }
 
     public DailyProgress? Calculate(QuotaWindow? week, DateTimeOffset now, TimeZoneInfo zone, string scope, bool fresh = true)
     {
-        if (!Valid(week, now) || now < LastSample || Day != LocalDay(now, zone) || Scope != scope || Reset != week!.ResetsAt || LastSample == default) return null;
+        if (!Valid(week, now) || now < LastSample || Day != LocalDay(now, zone) || Scope != scope || !SameWindow(Reset, week!.ResetsAt!.Value) || LastSample == default) return null;
         double days = Math.Max(1, (Reset - (fresh ? now : LastSample)).TotalDays);
         double budget = (100 - LastUsed) / days;
         double percent = budget <= 0 ? 100 : UsedToday / budget * 100;

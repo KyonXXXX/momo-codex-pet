@@ -397,6 +397,16 @@ public partial class PetWindow : Window
             }
         }
         // Exercise the actual routed button events and window message handler.
+        var displaySample = new DailyProgress(12, 3, 25, true, DateTimeOffset.UtcNow);
+        RenderDailyProgress(displaySample, true);
+        Assert(DailyUsedText.Text == "今日已用 25%" && DailyRemainingText.Text == "剩余 75%", "partial-day records display numeric percentages without inequalities");
+        RenderDailyProgress(displaySample with { Used = 0, Percent = 0 }, true);
+        Assert(DailyUsedText.Text == "今日已用 0%" && DailyRemainingText.Text == "剩余 100%" && DailyFill.Width == 0, "zero observed usage is displayed as numeric 0 and 100");
+        RenderDailyProgress(displaySample with { Used = .005, Percent = .04 }, true);
+        Assert(DailyUsedText.Text == "今日已用 0.04%" && DailyRemainingText.Text == "剩余 99.96%", "small daily usage retains hundredths instead of rounding to zero");
+        RenderDailyProgress(displaySample with { Used = 15, Percent = 125.25 }, true);
+        Assert(DailyUsedText.Text == "今日已用 125.25%" && DailyRemainingText.Text == "剩余 0%" && DailyFill.Width == 138, "overspend retains numeric percentage and caps the bar");
+        RenderDailyUsage();
         ClickFocusMenu();
         Assert(_focusEnd is not null && FocusBadge.IsVisible && _animation.Current == "focusIn", "focus menu starts timer and entry animation");
         PerformFamily("Sleep");
