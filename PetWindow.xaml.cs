@@ -24,6 +24,7 @@ public partial class PetWindow : Window
 {
     private readonly PetSettings _settings;
     private readonly CodexUsageClient _client = new();
+    private readonly DailyUsage _dailyUsage = App.IsTestMode ? new() : DailyUsage.Load();
     private readonly CancellationTokenSource _lifetime = new();
     private readonly DispatcherTimer _refreshTimer = new() { Interval = TimeSpan.FromSeconds(60) };
     private readonly DispatcherTimer _clockTimer = new() { Interval = TimeSpan.FromSeconds(1) };
@@ -92,7 +93,14 @@ public partial class PetWindow : Window
         else ResetPosition();
         _refreshTimer.Start(); _clockTimer.Start(); _idleTimer.Start();
         InitializeInteractions();
-        if (_args.Contains("--demo")) { _usage = DemoUsage(); RenderUsage(); }
+        if (_args.Contains("--demo"))
+        {
+            _usage = DemoUsage();
+            _dailyUsage.Observe(_usage.Main!.Weekly! with { UsedPercent = 37 }, _usage.FetchedAt.AddMinutes(-1), TimeZoneInfo.Local, DailyScope);
+            _dailyUsage.Observe(_usage.Main.Weekly, _usage.FetchedAt, TimeZoneInfo.Local, DailyScope);
+            _dailyUsage.Partial = false;
+            RenderUsage();
+        }
         else await RefreshAsync();
         if (_args.Contains("--capture")) await CaptureAsync();
         else PetStartup();
@@ -108,6 +116,7 @@ public partial class PetWindow : Window
             var snapshot = await _client.ReadAsync(_lifetime.Token);
             if (_closing) return;
             _usage = snapshot; _failed = false; QuotaCard.ToolTip = null;
+            _dailyUsage.Observe(snapshot.Main?.Weekly, snapshot.FetchedAt, TimeZoneInfo.Local, DailyScope); _dailyUsage.Save();
             RenderUsage();
             if (_settings.LowUsageNotification && snapshot.Main?.Weekly is { RemainingPercent: <= 15, ResetsAt: not null } week && _warnedReset != week.ResetsAt)
             {
@@ -151,6 +160,7 @@ public partial class PetWindow : Window
         }
         else { ResetText.Text = "重置时间未提供"; ResetText.ToolTip = null; }
         UpdateFreshness();
+        RenderDailyUsage();
         var trayText = $"Momo · 本周剩余 {RemainingText.Text}% · {CreditLabel(data)} credits";
         _tray.Text = trayText.Length > 63 ? trayText[..63] : trayText;
     }
@@ -169,6 +179,7 @@ public partial class PetWindow : Window
     {
         TickPetLife();
         UpdateFreshness();
+        RenderDailyUsage();
         if (_focusEnd is not DateTimeOffset end) return;
         var left = end - DateTimeOffset.UtcNow;
         if (left <= TimeSpan.Zero)
@@ -421,9 +432,11 @@ public partial class PetWindow : Window
         using (var empty = System.Text.Json.JsonDocument.Parse("{}")) _usage = UsageSnapshot.Parse(empty.RootElement, DateTimeOffset.UtcNow);
         RenderUsage();
         Assert(RemainingText.Text == "—" && CreditsText.Text == "未提供", "missing live metrics remain unknown instead of zero");
+        Assert(DailyUsedText.Text.Contains("—") && DailyRemainingText.Text.Contains("—"), "missing daily metrics remain unknown");
         _usage = liveUsage; RenderUsage();
         Assert(_usage?.Main?.Weekly is not null && !_failed, _args.Contains("--demo") ? "synthetic demo data available for public screenshots" : "live Codex data available for local verification");
-        Assert(QuotaCard.ActualWidth == 160 && QuotaCard.ActualHeight == 100, "quota bubble is 160 x 100 logical pixels");
+        Assert(QuotaCard.ActualWidth == 160 && QuotaCard.ActualHeight == 124, "quota bubble is 160 x 124 logical pixels");
+        if (_args.Contains("--demo")) Assert(DailyUsedText.Text == "今日已用 25%" && DailyRemainingText.Text == "剩余 75%", "daily UI shows correct synthetic used and remaining percentages");
         var cardOrigin = QuotaCard.TransformToAncestor(Root).Transform(new Point());
         Assert(cardOrigin.Y + QuotaCard.ActualHeight <= PetStage.Margin.Top && Math.Abs(cardOrigin.X + 80 - (PetStage.Margin.Left + PetStage.Width / 2)) < 1, "quota bubble is centered above the character without covering it");
         Assert(_settings.ShowQuotaBubble && QuotaBubble.IsVisible, "quota bubble is enabled by default");
@@ -432,7 +445,7 @@ public partial class PetWindow : Window
         var toggleMenu = OpenMenu();
         var toggleItem = toggleMenu.Items.OfType<MenuItem>().Single(item => Equals(item.Header, "显示额度气泡"));
         toggleItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); toggleMenu.IsOpen = false; UpdateLayout();
-        Assert(!QuotaBubble.IsVisible && !_settings.ShowQuotaBubble && Root.Height == visibleHeight - 108, "menu hides bubble and reclaims its space");
+        Assert(!QuotaBubble.IsVisible && !_settings.ShowQuotaBubble && Root.Height == visibleHeight - 132, "menu hides bubble and reclaims its space");
         Assert(Math.Abs(Top + PetStage.Margin.Top * WindowScale.ScaleY - petScreenTop) < 1, "hiding bubble keeps character in place");
         toggleMenu = OpenMenu();
         Assert(toggleMenu.PlacementTarget == PetImage, "settings menu remains accessible on character with bubble hidden");
@@ -440,6 +453,7 @@ public partial class PetWindow : Window
         Assert(!toggleItem.IsChecked, "hidden bubble menu reflects saved choice");
         toggleItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); toggleMenu.IsOpen = false; UpdateLayout();
         Assert(QuotaBubble.IsVisible && _settings.ShowQuotaBubble && Root.Height == visibleHeight, "character menu restores quota bubble");
+        Assert(DailyUsedText.IsVisible && DailyRemainingText.IsVisible && DailyFill.ActualWidth <= DailyTrack.ActualWidth, "daily progress is visible and stays within its track");
         Assert(UsageFill.ActualWidth <= UsageTrack.ActualWidth, "usage bar remains inside its resized track");
         _bubbleTimer.Stop(); SpeechBubble.Visibility = Visibility.Collapsed;
         foreach (string state in new[] { "idle", "pat", "focus", "sleep" })
@@ -460,7 +474,7 @@ public partial class PetWindow : Window
             testReport.Add($"{state}: animation rendered {bitmap.PixelWidth}x{bitmap.PixelHeight}");
         }
         _settings.Compact = true; ApplySize(); UpdateLayout();
-        Assert(QuotaCard.ActualWidth == 160 && QuotaCard.ActualHeight == 100, "compact mode retains readable bubble size");
+        Assert(QuotaCard.ActualWidth == 160 && QuotaCard.ActualHeight == 124, "compact mode retains readable bubble size");
         testReport.Add($"compact: window {Width}x{Height}; credits visible={CreditsText.IsVisible}; weekly visible={RemainingText.IsVisible}");
         foreach (bool compact in new[] { false, true })
         foreach (double scale in new[] { .8, 1.0, 1.2 })
@@ -510,7 +524,9 @@ public partial class PetWindow : Window
     {
         // Deliberately synthetic values for public screenshots. No account data is loaded.
         using var document = System.Text.Json.JsonDocument.Parse("""{"rateLimitsByLimitId":{"codex":{"planType":"pro","primary":{"usedPercent":24,"windowDurationMins":10080,"resetsAt":1893499200},"credits":{"balance":"1234.56","unlimited":false}}}}""");
-        return UsageSnapshot.Parse(document.RootElement, DateTimeOffset.UtcNow);
+        var snapshot = UsageSnapshot.Parse(document.RootElement, DateTimeOffset.UtcNow);
+        var main = snapshot.Main! with { Primary = new QuotaWindow(40, 10080, DateTimeOffset.UtcNow.AddDays(5)) };
+        return snapshot with { Main = main, Buckets = new[] { main } };
     }
     private void Cleanup()
     {

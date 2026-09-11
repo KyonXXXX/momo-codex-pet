@@ -17,6 +17,62 @@ internal static class SelfTests
         void Check(string name, Action test) { try { test(); report.Add("PASS " + name); } catch (Exception ex) { failures++; report.Add("FAIL " + name + ": " + ex.Message); } }
         static void Equal<T>(T actual, T expected) { if (!Equals(actual, expected)) throw new Exception($"Expected {expected}, got {actual}"); }
         static UsageSnapshot Parse(string json) { using var doc = JsonDocument.Parse(json); return UsageSnapshot.Parse(doc.RootElement, DateTimeOffset.UtcNow); }
+        Check("Daily progress uses weekly percentage points and dynamic remaining days", () =>
+        {
+            var now = new DateTimeOffset(2026,9,11,12,0,0,TimeSpan.Zero);
+            var state = new DailyUsage(); var week = new QuotaWindow(40,10080,now.AddDays(5));
+            state.Observe(week with { UsedPercent = 37 }, now.AddMinutes(-1), TimeZoneInfo.Utc,"codex");
+            state.Observe(week,now,TimeZoneInfo.Utc,"codex");
+            var p = state.Calculate(week,now,TimeZoneInfo.Utc,"codex")!;
+            Equal(p.Budget,12d); Equal(p.Used,3d); Equal(p.Percent,25d); Equal(p.RemainingPercent,75d); Equal(p.Partial,true);
+            Equal(state.Calculate(week,now.AddHours(12),TimeZoneInfo.Utc,"codex") is null,true);
+            Equal(state.Calculate(week,now.AddHours(6),TimeZoneInfo.Utc,"codex")!.Budget>12,true);
+            Equal(state.Calculate(week,now.AddHours(6),TimeZoneInfo.Utc,"codex",false)!.Budget,12d);
+        });
+        Check("Daily record survives restart and duplicate samples do not double count", () =>
+        {
+            var now=DateTimeOffset.UtcNow;var week=new QuotaWindow(20,10080,now.AddDays(5));var s=new DailyUsage();
+            s.Observe(week,now,TimeZoneInfo.Utc,"codex");s.Observe(week with {UsedPercent=23},now,TimeZoneInfo.Utc,"codex");
+            s=JsonSerializer.Deserialize<DailyUsage>(JsonSerializer.Serialize(s))!;
+            s.Observe(week with {UsedPercent=23},now,TimeZoneInfo.Utc,"codex");Equal(s.UsedToday,3d);
+            s.Observe(week with {UsedPercent=25},now.AddSeconds(60),TimeZoneInfo.Utc,"codex");Equal(s.UsedToday,5d);
+        });
+        Check("Daily rollover follows local date and does not attribute overnight gaps", () =>
+        {
+            var zone=TimeZoneInfo.CreateCustomTimeZone("test",TimeSpan.FromHours(2),"test","test");
+            var at=new DateTimeOffset(2026,9,11,21,59,30,TimeSpan.Zero);var week=new QuotaWindow(20,10080,at.AddDays(5));var s=new DailyUsage();
+            s.Observe(week,at,zone,"codex");s.Observe(week with {UsedPercent=23},at.AddMinutes(1),zone,"codex");
+            Equal(s.Day,"2026-09-12");Equal(s.UsedToday,0d);Equal(s.Partial,false);
+            s.Observe(week with {UsedPercent=30},at.AddDays(1).AddHours(4),zone,"codex");Equal(s.Partial,true);Equal(s.UsedToday,0d);
+        });
+        Check("Weekly reset, correction and scope change reset the daily baseline", () =>
+        {
+            var at=DateTimeOffset.UtcNow;var week=new QuotaWindow(40,10080,at.AddDays(5));var s=new DailyUsage();
+            s.Observe(week,at,TimeZoneInfo.Utc,"a");s.Observe(week with {UsedPercent=45},at,TimeZoneInfo.Utc,"a");
+            s.Observe(week with {UsedPercent=10},at,TimeZoneInfo.Utc,"a");Equal(s.UsedToday,0d);Equal(s.Partial,true);
+            s.Observe(week with {ResetsAt=at.AddDays(6)},at,TimeZoneInfo.Utc,"a");Equal(s.UsedToday,0d);
+            s.Observe(week with {UsedPercent=50},at,TimeZoneInfo.Utc,"b");Equal(s.UsedToday,0d);
+        });
+        Check("Daily overspend and zero quota have finite nonnegative progress", () =>
+        {
+            var at=DateTimeOffset.UtcNow;var week=new QuotaWindow(0,10080,at.AddDays(5));var s=new DailyUsage();
+            s.Observe(week,at,TimeZoneInfo.Utc,"a");week=week with {UsedPercent=80};s.Observe(week,at,TimeZoneInfo.Utc,"a");
+            Equal(s.Calculate(week,at,TimeZoneInfo.Utc,"a")!.Percent>100,true);Equal(s.Calculate(week,at,TimeZoneInfo.Utc,"a")!.RemainingPercent,0d);
+            week=week with {UsedPercent=100};s.Observe(week,at,TimeZoneInfo.Utc,"a");Equal(s.Calculate(week,at,TimeZoneInfo.Utc,"a")!.Percent,100d);
+        });
+        Check("Unknown, expired and stale-out-of-order quota is not fabricated", () =>
+        {
+            var at=DateTimeOffset.UtcNow;var week=new QuotaWindow(40,10080,at.AddDays(5));var s=new DailyUsage();
+            Equal(s.Calculate(week,at,TimeZoneInfo.Utc,"a"),null);s.Observe(week,at,TimeZoneInfo.Utc,"a");
+            s.Observe(week with {UsedPercent=45},at.AddSeconds(-1),TimeZoneInfo.Utc,"a");Equal(s.UsedToday,0d);
+            Equal(s.Calculate(null,at,TimeZoneInfo.Utc,"a"),null);Equal(s.Calculate(week with {ResetsAt=null},at,TimeZoneInfo.Utc,"a"),null);
+            Equal(s.Calculate(week,at.AddDays(5),TimeZoneInfo.Utc,"a"),null);
+        });
+        Check("Final partial day never suggests more than weekly remaining", () =>
+        {
+            var at=DateTimeOffset.UtcNow;var week=new QuotaWindow(75,10080,at.AddHours(2));var s=new DailyUsage();
+            s.Observe(week,at,TimeZoneInfo.Utc,"a");Equal(s.Calculate(week,at,TimeZoneInfo.Utc,"a")!.Budget,25d);
+        });
         Check("Old settings gain healthy pet defaults without changing quota visibility", () =>
         {
             var settings=JsonSerializer.Deserialize<PetSettings>("{\"ShowQuotaBubble\":false,\"CompletedFocus\":7}")!;

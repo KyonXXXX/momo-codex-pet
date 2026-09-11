@@ -6,11 +6,11 @@
       <Ellipse x:Name="PetShadow" Fill="#1AB799D4" Width="104" Height="10" VerticalAlignment="Bottom" Margin="0,0,0,5"/>
       <Image x:Name="PetImage" Width="256" Height="256" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" MouseLeftButtonDown="PetMouseDown" MouseMove="PetMouseMove" MouseLeftButtonUp="PetMouseUp" LostMouseCapture="PetLostCapture" Cursor="Hand" ToolTip="点击摸头 · 按住拖动 · 右键设置" AutomationProperties.Name="桌宠角色，点击摸头，拖动改变位置"/>
     </Grid>
-    <Canvas x:Name="QuotaBubble" Width="160" Height="110" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="48,6,0,0">
-      <Border x:Name="QuotaCard" VerticalAlignment="Top" Width="160" Height="100" Padding="10,8" Background="#FFFCFF" CornerRadius="14" BorderBrush="#E6DBEF" BorderThickness="1" MouseLeftButtonDown="CardDrag">
+    <Canvas x:Name="QuotaBubble" Width="160" Height="134" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="48,6,0,0">
+      <Border x:Name="QuotaCard" VerticalAlignment="Top" Width="160" Height="124" Padding="10,8" Background="#FFFCFF" CornerRadius="14" BorderBrush="#E6DBEF" BorderThickness="1" MouseLeftButtonDown="CardDrag">
         <Border.Effect><DropShadowEffect Color="#584271" BlurRadius="10" ShadowDepth="2" Opacity="0.12"/></Border.Effect>
         <Grid>
-          <Grid.RowDefinitions><RowDefinition Height="16"/><RowDefinition Height="22"/><RowDefinition Height="4"/><RowDefinition Height="22"/><RowDefinition Height="16"/></Grid.RowDefinitions>
+          <Grid.RowDefinitions><RowDefinition Height="16"/><RowDefinition Height="22"/><RowDefinition Height="4"/><RowDefinition Height="20"/><RowDefinition Height="4"/><RowDefinition Height="22"/><RowDefinition Height="16"/></Grid.RowDefinitions>
           <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="18"/></Grid.ColumnDefinitions>
             <Border Background="#F0E7F8" CornerRadius="4" Padding="4,1" VerticalAlignment="Center" MaxWidth="42"><TextBlock x:Name="PlanText" Text="CODEX" FontSize="9" FontWeight="SemiBold" Foreground="#9778B4" TextTrimming="CharacterEllipsis"/></Border>
@@ -23,13 +23,19 @@
             <TextBlock x:Name="UsedText" Text="已用 —%" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="10"/>
           </Grid>
           <Grid x:Name="UsageTrack" Grid.Row="2" Height="4"><Border Background="#F0E8F6" CornerRadius="2"/><Border x:Name="UsageFill" Background="#BA98DA" CornerRadius="2" Width="0" HorizontalAlignment="Left"/></Grid>
-          <Grid Grid.Row="3" VerticalAlignment="Center">
+          <Grid x:Name="DailyRow" Grid.Row="3" VerticalAlignment="Center" ToolTip="等待额度同步后开始记录今日用量">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left" MaxHeight="14"><TextBlock x:Name="DailyUsedText" Text="今日已用 —%" FontSize="9" Foreground="#3F9275"/></Viewbox>
+            <TextBlock x:Name="DailyRemainingText" Grid.Column="1" Text="剩余 —%" FontSize="9" Margin="3,0,0,0"/>
+          </Grid>
+          <Grid x:Name="DailyTrack" Grid.Row="4" Height="4"><Border Background="#E1F2E9" CornerRadius="2"/><Border x:Name="DailyFill" Background="#77B99B" CornerRadius="2" Width="0" HorizontalAlignment="Left"/></Grid>
+          <Grid Grid.Row="5" VerticalAlignment="Center">
             <Grid.ColumnDefinitions><ColumnDefinition Width="26"/><ColumnDefinition Width="*"/><ColumnDefinition Width="29"/></Grid.ColumnDefinitions>
             <TextBlock Text="余额" FontSize="10" VerticalAlignment="Center"/>
             <Viewbox Grid.Column="1" Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left" VerticalAlignment="Center" MaxHeight="18"><TextBlock x:Name="CreditsText" Text="—" FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold"/></Viewbox>
             <TextBlock Grid.Column="2" Text="credits" FontSize="9" Foreground="#8F839D" VerticalAlignment="Center" HorizontalAlignment="Right"/>
           </Grid>
-          <TextBlock x:Name="ResetText" Grid.Row="4" Text="正在读取…" FontSize="10" Foreground="#8F839D" VerticalAlignment="Center"/>
+          <TextBlock x:Name="ResetText" Grid.Row="6" Text="正在读取…" FontSize="10" Foreground="#8F839D" VerticalAlignment="Center"/>
         </Grid>
       </Border>
       <Path x:Name="QuotaTail" Data="M 72,99.5 L 80,109 L 88,99.5" Fill="#FFFCFF" Stroke="#E6DBEF" StrokeThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False"/>

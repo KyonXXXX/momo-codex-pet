@@ -57,7 +57,7 @@ public partial class PetWindow
             if (bubble)
             {
                 var q = QuotaBubble.TranslatePoint(new Point(), Root);
-                var bubbleRect = new Rect(Left + q.X * WindowScale.ScaleX, Top + q.Y * WindowScale.ScaleY, 160 * WindowScale.ScaleX, 110 * WindowScale.ScaleY);
+                var bubbleRect = new Rect(Left + q.X * WindowScale.ScaleX, Top + q.Y * WindowScale.ScaleY, 160 * WindowScale.ScaleX, 134 * WindowScale.ScaleY);
                 var toleranceArea = area; toleranceArea.Inflate(1, 1);
                 check(toleranceArea.Contains(bubbleRect), $"edge bubble fully visible: {family}, compact={compact}, scale={scale}");
                 check(RightWall ? q.X + 170 <= PetStage.Margin.Left : LeftWall ? q.X - 10 >= PetStage.Margin.Left + PetStage.Width : q.Y - 10 >= PetStage.Margin.Top + PetStage.Height, $"bubble placed inward: {family}");

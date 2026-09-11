@@ -12,6 +12,7 @@ vpet-readme.md
 .env.*
 auth.json
 settings.json
+daily-usage.json
 *.pfx
 *.key
 *.pem

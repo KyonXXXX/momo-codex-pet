@@ -27,13 +27,13 @@ public partial class PetWindow
             double size = _settings.Compact ? 192 : 256;
             var area = WorkingArea();
             var side = RightWall ? BubbleSide.Left : LeftWall ? BubbleSide.Right : TopWall ? BubbleSide.Below : BubbleSide.Above;
-            if (side == BubbleSide.Above && double.IsFinite(oldY) && oldY - 108 * _settings.Scale < area.Top)
+            if (side == BubbleSide.Above && double.IsFinite(oldY) && oldY - 132 * _settings.Scale < area.Top)
                 side = BubbleSide.Below;
             _bubbleSide = side;
             bool column = side is BubbleSide.Left or BubbleSide.Right;
             bool hasControls = _settings.ShowQuotaBubble || SpeechBubble.Visibility == Visibility.Visible || FocusBadge.Visibility == Visibility.Visible;
             double gutter = column && hasControls ? 176 : 0;
-            double above = side == BubbleSide.Above && _settings.ShowQuotaBubble ? 108 : 0;
+            double above = side == BubbleSide.Above && _settings.ShowQuotaBubble ? 132 : 0;
             double petX = side == BubbleSide.Left ? gutter : 0, petY = 8 + above;
             PetStage.Width = PetStage.Height = PetImage.Width = PetImage.Height = size;
             PetStage.Margin = new Thickness(petX, petY, 0, 0);
@@ -56,17 +56,17 @@ public partial class PetWindow
                 BubbleSide.Left => new Thickness(159,40,0,0),
                 BubbleSide.Right => new Thickness(-9,40,0,0),
                 BubbleSide.Below => new Thickness(72,-9,0,0),
-                _ => new Thickness(72,99,0,0)
+                _ => new Thickness(72,123,0,0)
             };
             SpeechBubble.HorizontalAlignment = FocusBadge.HorizontalAlignment = HorizontalAlignment.Left;
             double infoX = column ? qx : Math.Max(6, size - 160);
-            double speechY = column ? 126 : side == BubbleSide.Below ? size + (_settings.ShowQuotaBubble ? 130 : 18) : petY + 134;
-            double focusY = column ? 180 : side == BubbleSide.Below ? speechY + (SpeechBubble.Visibility == Visibility.Visible ? 55 : 0) : petY + Math.Max(174, size - 58);
+            double speechY = column ? 150 : side == BubbleSide.Below ? size + (_settings.ShowQuotaBubble ? 154 : 18) : petY + 134;
+            double focusY = column ? 204 : side == BubbleSide.Below ? speechY + (SpeechBubble.Visibility == Visibility.Visible ? 55 : 0) : petY + Math.Max(174, size - 58);
             SpeechBubble.Margin = new Thickness(infoX, speechY, 0, 0);
             FocusBadge.Margin = new Thickness(infoX, focusY, 0, 0);
             Root.Width = size + gutter;
             Root.Height = petY + size + 8;
-            if (_settings.ShowQuotaBubble) Root.Height = Math.Max(Root.Height, qy + 116);
+            if (_settings.ShowQuotaBubble) Root.Height = Math.Max(Root.Height, qy + 140);
             if (SpeechBubble.Visibility == Visibility.Visible) Root.Height = Math.Max(Root.Height, speechY + 55);
             if (FocusBadge.Visibility == Visibility.Visible) Root.Height = Math.Max(Root.Height, focusY + 54);
             double scale = Math.Min(_settings.Scale, Math.Min((area.Width - 20) / Root.Width, (area.Height - 20) / Root.Height));

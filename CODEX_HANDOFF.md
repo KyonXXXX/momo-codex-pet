@@ -1,12 +1,9 @@
-# Momo 2.0.1 maintenance handoff
+# Momo 2.1.0 maintenance handoff
 
-- Phase: release complete. User outcome: mouse follows the raised clothing corner; bottom shortcuts removed and focus moved into right-click menu; quota bubble automatically moves inward at screen edges.
-- Owners: Services/VPetCatalog.cs reads official mood anchors; PetWindow handles captured drag input; PetWindow.Layout.cs preserves sprite origin across bubble changes and attaches opaque character bounds to walls. Ground shadow is hidden during airborne actions.
-- Native VPet touch/sleep remain in the full interaction system; the old bottom shortcut handlers are removed.
-- Assets unchanged: pinned VPet 2e99a42ebeff71d792118f2e8de744b773042f8d, 67 families / 609 groups / 6,181 frames, 123 items, 13 activities, 12 layered recipes. Original PNGs remain in release packages rather than Git history.
-- Verification: 388 packaged WPF checks passed, including render-content and side-tail pixel assertions. Pure/live checks: 15 passed. Evidence: artifacts/release-2.0.1.txt and artifacts/test-results.txt.
-- Coverage: four raise moods, two sizes, three scales, capture loss, focus menu, quota toggle at walls/top/side hiding, native movement, feeding/activity settlement, touch regions and gallery tabs. Public captures use synthetic quota values only.
-- Debug findings: clip-union bounds differ from the first frame; fractional native movement must not be mistaken for collision. See DEBUG_HANDOFF.md.
-- Save compatibility and quota client unchanged. Limits: Windows WPF only; mixed-DPI cross-monitor behavior and physical audio output not exhaustively tested.
-- Release artifacts: dist/release-v2.0.1 and dist/Momo-v2.0.1-windows-x64.zip. Next: observe ordinary desktop use, especially cross-monitor dragging on mixed DPI.
-- Delivery verified: public GitHub v2.0.1 release contains Momo-v2.0.1-windows-x64.zip (507,286,087 bytes). Installed executable reports 2.0.1; its native window titled Momo · Codex 桌宠 is visible. Source implementation commit: 6742531c44a9804663e93771d2e67680dece1faa.
+- Phase: verified release candidate. Approved change: remove the concept's daily-suggestion text row; add only today's used/remaining percentages and progress bar. Existing weekly quota, credits, sync state and reset time remain visible.
+- Implementation: Services/DailyUsage.cs persists observed weekly-percentage deltas by local date and weekly reset; PetWindow.DailyUsage.cs calculates/render daily progress; card is 160 x 124 px, adaptive layout resized accordingly. Pure reference budget = remaining weekly percent / max(1, remaining days).
+- Coverage: seven new daily-usage test groups cover dynamic calculation, local date, restart, duplicates, missing/expired/out-of-order data, reset/correction, overspend, zero quota and final partial day. Packaged WPF regression: 391 checks passed. Pure/live checks: 22 passed. Evidence: artifacts/release-2.1.0.txt and artifacts/test-results.txt.
+- Partial-day history cannot be fetched from the quota endpoint. First-start and overnight gaps show ≥ / ≤ markers, with details on hover. Records live in local daily-usage.json; no token or credits balance is stored.
+- Original VPet assets, interactions, focus menu, cursor grip anchor and screen-edge behavior preserved. Static asset set: 609 groups / 6,181 frames.
+- Limits and evidence: docs/validation-2.1.0.md; artifacts/daily-check.txt; artifacts/test-results.txt. Public UI captures contain synthetic data only.
+- Next: finish packaged checks, install/start dist/Momo, publish v2.1.0 and verify uploaded ZIP.
