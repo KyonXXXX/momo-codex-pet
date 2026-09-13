@@ -24,10 +24,13 @@ public partial class PetWindow
         foreach(var m in moods)mood.Items.Add(m=="auto"?"状态：自动":VPetCatalog.MoodLabel(m));
         mood.SelectedIndex=Array.IndexOf(moods,_settings.MoodOverride);
         mood.SelectionChanged+=(_,_)=>{_settings.MoodOverride=moods[Math.Max(0,mood.SelectedIndex)];_settings.Save();StopPetActivity();};choices.Children.Add(mood);
-        void Check(string title,bool value,Action<bool> change){var c=new CheckBox {Content=title,IsChecked=value,VerticalAlignment=VerticalAlignment.Center,Margin=new Thickness(0,0,12,0)};c.Click+=(_,_)=>{change(c.IsChecked==true);_settings.Save();};choices.Children.Add(c);}
+        void Check(string title,bool value,Action<bool> change){var c=new CheckBox {Content=title,IsChecked=value,VerticalAlignment=VerticalAlignment.Center,Margin=new Thickness(0,0,12,0)};c.Click+=(_,_)=>{change(c.IsChecked==true);_settings.Save();_refreshInteractionStats?.Invoke();};choices.Children.Add(c);}
         Check("自主互动",_settings.AutoInteract,v=>_settings.AutoInteract=v);
         Check("自主走动",_settings.AutoMove,v=>_settings.AutoMove=v);
+        Check("自动购买补充（<60）",_settings.AutoCareEnabled,v=>_settings.AutoCareEnabled=v);
         choices.Children.Add(PanelButton("停止当前动作",StopPetActivity));
+        var autoCareStatus=new TextBlock {TextWrapping=TextWrapping.Wrap,FontSize=11,Foreground=Brush("#8F839D"),Margin=new Thickness(0,0,0,10)};
+        header.Children.Add(autoCareStatus);
         var tabs=new TabControl();shell.Children.Add(tabs);
         void Tab(string name,UIElement content)=>tabs.Items.Add(new TabItem {Header=name,Content=content,Padding=new Thickness(12,7,12,7)});
         var actions=new StackPanel {Margin=new Thickness(12)};
@@ -51,8 +54,10 @@ public partial class PetWindow
         Tab("动画图鉴",BuildGalleryPanel());
         window.Content=shell;
         void RefreshStats(){var l=_settings.Life;stats.Text=$"Lv.{l.Level}  ·  宠物金币 {l.Coins:0.0}  ·  经验 {l.Experience:0}  ·  好感 {l.Affection:0}\n体力 {l.Energy:0}   饱腹 {l.Hunger:0}   水分 {l.Thirst:0}   心情 {l.Feeling:0}   健康 {l.Health:0}   ·  {VPetCatalog.MoodLabel(Mood)}\n{(_activity is {} a?$"正在{a.Name}":_actionFamily is {} f?$"正在{VPetCatalog.Label(f)}":_sleeping?"正在休息":"自由活动")}  ·  宠物金币独立于 Codex credits";}
-        var refresh=new DispatcherTimer {Interval=TimeSpan.FromSeconds(1)};refresh.Tick+=(_,_)=>RefreshStats();refresh.Start();RefreshStats();
-        window.Closed+=(_,_)=>{refresh.Stop();_interactionPanel=null;};window.Show();
+        void RefreshAutoCare(){autoCareStatus.Text=$"自动补充：{(_settings.AutoCareEnabled?"已开启":"已关闭")} · 体力、饱腹、水分、心情、健康低于 60 时购买补充，每 30 秒最多一件。\n{_lastAutoCare}";}
+        _refreshInteractionStats=()=>{RefreshStats();RefreshAutoCare();};
+        var refresh=new DispatcherTimer {Interval=TimeSpan.FromSeconds(1)};refresh.Tick+=(_,_)=>_refreshInteractionStats?.Invoke();refresh.Start();_refreshInteractionStats();
+        window.Closed+=(_,_)=>{refresh.Stop();_refreshInteractionStats=null;_interactionPanel=null;};window.Show();
     }
     private static Button PanelButton(string title,Action action)
     {var b=new Button {Content=title,Padding=new Thickness(10,6,10,6),Margin=new Thickness(0,0,6,6),MinHeight=30};b.Click+=(_,_)=>action();return b;}
@@ -61,6 +66,7 @@ public partial class PetWindow
         var root=new DockPanel {Margin=new Thickness(12)};
         var top=new StackPanel();DockPanel.SetDock(top,Dock.Top);root.Children.Add(top);
         top.Children.Add(new TextBlock {Text=$"{_catalog.Foods.Count} 种官方物品 · 动画完成后扣除宠物金币并生效，中途停止不扣费。",TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,0,0,8)});
+        top.Children.Add(new TextBlock {Text="自动补充直接扣除宠物金币并生效，优先买能补到 60 的最便宜道具；不够补到 60 时选择恢复量／金币更划算的道具。跳过有负面指标效果的道具，金币不足则等待。工作与专注可继续，手动投喂时暂停自动购买。",TextWrapping=TextWrapping.Wrap,FontSize=11,Margin=new Thickness(0,0,0,8)});
         var search=new TextBox {Margin=new Thickness(0,0,0,8),ToolTip="按名称、类型或介绍搜索"};top.Children.Add(search);
         var bottom=new StackPanel {Margin=new Thickness(0,8,0,0)};DockPanel.SetDock(bottom,Dock.Bottom);root.Children.Add(bottom);
         var detail=new TextBlock {TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,0,0,8)};bottom.Children.Add(detail);

@@ -23,10 +23,10 @@
             <TextBlock x:Name="UsedText" Text="已用 —%" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="10"/>
           </Grid>
           <Grid x:Name="UsageTrack" Grid.Row="2" Height="4"><Border Background="#F0E8F6" CornerRadius="2"/><Border x:Name="UsageFill" Background="#BA98DA" CornerRadius="2" Width="0" HorizontalAlignment="Left"/></Grid>
-          <Grid x:Name="DailyRow" Grid.Row="3" VerticalAlignment="Center" ToolTip="等待额度同步后开始记录今日用量">
+          <Grid x:Name="DailyRow" Grid.Row="3" VerticalAlignment="Center" ToolTip="等待同步账号周额度后计算今日剩余可用额度">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left" MaxHeight="14"><TextBlock x:Name="DailyUsedText" Text="今日已用 —%" FontSize="9" Foreground="#3F9275"/></Viewbox>
-            <TextBlock x:Name="DailyRemainingText" Grid.Column="1" Text="剩余 —%" FontSize="9" Margin="3,0,0,0"/>
+            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left" MaxHeight="14"><TextBlock x:Name="DailyLabel" Text="今日剩余可用" FontSize="9" Foreground="#3F9275"/></Viewbox>
+            <TextBlock x:Name="DailyRemainingText" Grid.Column="1" Text="—%" FontSize="9" Margin="3,0,0,0"/>
           </Grid>
           <Grid x:Name="DailyTrack" Grid.Row="4" Height="4"><Border Background="#E1F2E9" CornerRadius="2"/><Border x:Name="DailyFill" Background="#77B99B" CornerRadius="2" Width="0" HorizontalAlignment="Left"/></Grid>
           <Grid Grid.Row="5" VerticalAlignment="Center">

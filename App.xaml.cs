@@ -15,6 +15,12 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (e.Args.Contains("--stop-codex-watcher")) { CodexFollower.StopForUpdate(); Shutdown(); return; }
+        if (e.Args.Contains("--watch-codex"))
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            await CodexFollower.RunAsync(); Shutdown(); return;
+        }
         if (e.Args.Contains("--demo") && !e.Args.Contains("--capture")) { Shutdown(2); return; }
         Directory.CreateDirectory(DataDirectory);
         IsTestMode = e.Args.Contains("--self-test") || e.Args.Contains("--capture");
@@ -26,8 +32,9 @@ public partial class App : Application
         }
         if (!IsTestMode)
         {
+            if (e.Args.Contains("--codex-follow-start") && !PetSettings.Load().FollowCodexDesktop) { Shutdown(); return; }
             _mutex = new Mutex(true, "Local\\MomoCodexPet-v1", out bool created);
-            if (!created) { NativeMethods.ShowExisting(); Shutdown(); return; }
+            if (!created) { if (!e.Args.Contains("--codex-follow-start")) NativeMethods.ShowExisting(); Shutdown(); return; }
         }
         DispatcherUnhandledException += (_, args) =>
         {

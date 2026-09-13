@@ -24,7 +24,6 @@ public partial class PetWindow : Window
 {
     private readonly PetSettings _settings;
     private readonly CodexUsageClient _client = new();
-    private readonly DailyUsage _dailyUsage = App.IsTestMode ? new() : DailyUsage.Load();
     private readonly CancellationTokenSource _lifetime = new();
     private readonly DispatcherTimer _refreshTimer = new() { Interval = TimeSpan.FromSeconds(60) };
     private readonly DispatcherTimer _clockTimer = new() { Interval = TimeSpan.FromSeconds(1) };
@@ -93,12 +92,10 @@ public partial class PetWindow : Window
         else ResetPosition();
         _refreshTimer.Start(); _clockTimer.Start(); _idleTimer.Start();
         InitializeInteractions();
+        if (!App.IsTestMode) InitializeCodexFollower();
         if (_args.Contains("--demo"))
         {
             _usage = DemoUsage();
-            _dailyUsage.Observe(_usage.Main!.Weekly! with { UsedPercent = 37 }, _usage.FetchedAt.AddMinutes(-1), TimeZoneInfo.Local, DailyScope);
-            _dailyUsage.Observe(_usage.Main.Weekly, _usage.FetchedAt, TimeZoneInfo.Local, DailyScope);
-            _dailyUsage.Partial = false;
             RenderUsage();
         }
         else await RefreshAsync();
@@ -116,7 +113,6 @@ public partial class PetWindow : Window
             var snapshot = await _client.ReadAsync(_lifetime.Token);
             if (_closing) return;
             _usage = snapshot; _failed = false; QuotaCard.ToolTip = null;
-            _dailyUsage.Observe(snapshot.Main?.Weekly, snapshot.FetchedAt, TimeZoneInfo.Local, DailyScope); _dailyUsage.Save();
             RenderUsage();
             if (_settings.LowUsageNotification && snapshot.Main?.Weekly is { RemainingPercent: <= 15, ResetsAt: not null } week && _warnedReset != week.ResetsAt)
             {
@@ -289,6 +285,7 @@ public partial class PetWindow : Window
         menu.Items.Add(sizeMenu);
         Add(menu, "周额度不足提醒（剩余 ≤15%）", () => { _settings.LowUsageNotification = !_settings.LowUsageNotification; _settings.Save(); }, _settings.LowUsageNotification);
         Add(menu, "开机启动", ToggleAutoStart, AutoStartEnabled());
+        Add(menu, "跟随 Codex Desktop 启动", ToggleCodexFollower, _settings.FollowCodexDesktop);
         Add(menu, "回到屏幕右下角", ResetPosition);
         menu.Items.Add(new Separator());
         Add(menu, "素材来源与使用说明", ShowAbout);
@@ -397,15 +394,46 @@ public partial class PetWindow : Window
             }
         }
         // Exercise the actual routed button events and window message handler.
-        var displaySample = new DailyProgress(12, 3, 25, true, DateTimeOffset.UtcNow);
+        bool previousFollow = _settings.FollowCodexDesktop;
+        var followMenu = OpenMenu();
+        var followItem = followMenu.Items.OfType<MenuItem>().Single(i => Equals(i.Header, "跟随 Codex Desktop 启动"));
+        Assert(followItem.IsChecked == previousFollow, "Codex follow menu reflects its saved default");
+        followItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); followMenu.IsOpen = false;
+        Assert(_settings.FollowCodexDesktop != previousFollow, "Codex follow menu toggles the actual preference");
+        ToggleCodexFollower();
+        Assert(_settings.FollowCodexDesktop == previousFollow, "Codex follow preference can be restored without changing pet state");
+        if (_args.Contains("--auto-care-test")) TestAutoCare(Assert, Path.GetDirectoryName(Path.GetFullPath(path))!);
+        var displaySample = new DailyAllowance(30, 3, 100d / 70);
         RenderDailyProgress(displaySample, true);
-        Assert(DailyUsedText.Text == "今日已用 25%" && DailyRemainingText.Text == "剩余 75%", "partial-day records display numeric percentages without inequalities");
-        RenderDailyProgress(displaySample with { Used = 0, Percent = 0 }, true);
-        Assert(DailyUsedText.Text == "今日已用 0%" && DailyRemainingText.Text == "剩余 100%" && DailyFill.Width == 0, "zero observed usage is displayed as numeric 0 and 100");
-        RenderDailyProgress(displaySample with { Used = .005, Percent = .04 }, true);
-        Assert(DailyUsedText.Text == "今日已用 0.04%" && DailyRemainingText.Text == "剩余 99.96%", "small daily usage retains hundredths instead of rounding to zero");
-        RenderDailyProgress(displaySample with { Used = 15, Percent = 125.25 }, true);
-        Assert(DailyUsedText.Text == "今日已用 125.25%" && DailyRemainingText.Text == "剩余 0%" && DailyFill.Width == 138, "overspend retains numeric percentage and caps the bar");
+        Assert(DailyLabel.Text == "今日剩余可用" && DailyRemainingText.Text == "10%", "debt example shows ten percent of the base daily allowance");
+        RenderDailyProgress(displaySample with { AvailableWeeklyPercent = 0 }, true);
+        Assert(DailyRemainingText.Text == "0%" && DailyFill.Width == 0, "exhausted daily allowance empties the bar");
+        RenderDailyProgress(displaySample with { AvailableWeeklyPercent = .04 / 7 }, true);
+        Assert(DailyRemainingText.Text == "0.04%", "small remaining allowance retains hundredths");
+        RenderDailyProgress(new DailyAllowance(60, 3, 20), true);
+        Assert(DailyRemainingText.Text == "140%" && DailyFill.Width == 138, "redistributed surplus shows over one hundred percent with a capped bar");
+        RenderDailyProgress(displaySample, false);
+        Assert(DailyRow.ToolTip.ToString()!.Contains("离线"), "stale daily allowance is explicitly labeled in its tooltip");
+        RenderDailyProgress(new DailyAllowance(25, 3, 0), true);
+        Assert(DailyLabel.Text == "今日已超额" && DailyRemainingText.Text == "25%" && Math.Abs(DailyFill.Width - 34.5) < .001, "overdraw switches the label and fills a proportional excess bar");
+        Assert(((SolidColorBrush)DailyFill.Background).Color == ((SolidColorBrush)Brush("#D67B7B")).Color, "overdraw bar uses its distinct warning color");
+        Assert(DailyRow.ToolTip.ToString()!.Contains("前几天结转"), "overdraw explains carried debt without claiming actual daily usage history");
+        UpdateLayout();
+        var overdrawImage = new RenderTargetBitmap((int)(QuotaCard.ActualWidth * 2), (int)(QuotaCard.ActualHeight * 2), 192, 192, PixelFormats.Pbgra32);
+        overdrawImage.Render(QuotaCard);
+        var overdrawEncoder = new PngBitmapEncoder(); overdrawEncoder.Frames.Add(BitmapFrame.Create(overdrawImage));
+        using (var output = File.Create(Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "daily-overdraw-card.png"))) overdrawEncoder.Save(output);
+        RenderDailyProgress(new DailyAllowance(10, 3, 0), true);
+        Assert(DailyRemainingText.Text == "130%" && DailyFill.Width == 138, "excess over a full day retains its uncapped percentage");
+        RenderDailyProgress(new DailyAllowance(2 * DailyAllowance.BaseDaily - .001 / 7, 3, 0), true);
+        Assert(DailyRemainingText.Text == "<0.01%", "tiny positive overdraw is never mislabeled zero");
+        RenderDailyProgress(new DailyAllowance(2 * DailyAllowance.BaseDaily, 3, 0), true);
+        Assert(DailyLabel.Text == "今日剩余可用" && DailyRemainingText.Text == "0%", "exactly exhausted returns from overdraw to zero remaining");
+        RenderDailyProgress(new DailyAllowance(60, 3, 20), true);
+        Assert(DailyLabel.Text == "今日剩余可用" && DailyRemainingText.Text == "140%", "replenished allowance restores its remaining label");
+        RenderDailyProgress(new DailyAllowance(25, 3, 0), true);
+        var beforeUnknown = _usage; _usage = null; RenderDailyUsage(); _usage = beforeUnknown;
+        Assert(DailyLabel.Text == "今日剩余可用" && DailyRemainingText.Text == "—%", "missing data clears an obsolete overdraw label");
         RenderDailyUsage();
         ClickFocusMenu();
         Assert(_focusEnd is not null && FocusBadge.IsVisible && _animation.Current == "focusIn", "focus menu starts timer and entry animation");
@@ -442,11 +470,11 @@ public partial class PetWindow : Window
         using (var empty = System.Text.Json.JsonDocument.Parse("{}")) _usage = UsageSnapshot.Parse(empty.RootElement, DateTimeOffset.UtcNow);
         RenderUsage();
         Assert(RemainingText.Text == "—" && CreditsText.Text == "未提供", "missing live metrics remain unknown instead of zero");
-        Assert(DailyUsedText.Text.Contains("—") && DailyRemainingText.Text.Contains("—"), "missing daily metrics remain unknown");
+        Assert(DailyRemainingText.Text == "—%", "missing daily metrics remain unknown");
         _usage = liveUsage; RenderUsage();
         Assert(_usage?.Main?.Weekly is not null && !_failed, _args.Contains("--demo") ? "synthetic demo data available for public screenshots" : "live Codex data available for local verification");
         Assert(QuotaCard.ActualWidth == 160 && QuotaCard.ActualHeight == 124, "quota bubble is 160 x 124 logical pixels");
-        if (_args.Contains("--demo")) Assert(DailyUsedText.Text == "今日已用 25%" && DailyRemainingText.Text == "剩余 75%", "daily UI shows correct synthetic used and remaining percentages");
+        if (_args.Contains("--demo")) Assert(DailyRemainingText.Text == "20%", "demo derives daily allowance directly from its weekly snapshot");
         var cardOrigin = QuotaCard.TransformToAncestor(Root).Transform(new Point());
         Assert(cardOrigin.Y + QuotaCard.ActualHeight <= PetStage.Margin.Top && Math.Abs(cardOrigin.X + 80 - (PetStage.Margin.Left + PetStage.Width / 2)) < 1, "quota bubble is centered above the character without covering it");
         Assert(_settings.ShowQuotaBubble && QuotaBubble.IsVisible, "quota bubble is enabled by default");
@@ -463,7 +491,7 @@ public partial class PetWindow : Window
         Assert(!toggleItem.IsChecked, "hidden bubble menu reflects saved choice");
         toggleItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); toggleMenu.IsOpen = false; UpdateLayout();
         Assert(QuotaBubble.IsVisible && _settings.ShowQuotaBubble && Root.Height == visibleHeight, "character menu restores quota bubble");
-        Assert(DailyUsedText.IsVisible && DailyRemainingText.IsVisible && DailyFill.ActualWidth <= DailyTrack.ActualWidth, "daily progress is visible and stays within its track");
+        Assert(DailyLabel.IsVisible && DailyRemainingText.IsVisible && DailyFill.ActualWidth <= DailyTrack.ActualWidth, "daily progress is visible and stays within its track");
         Assert(UsageFill.ActualWidth <= UsageTrack.ActualWidth, "usage bar remains inside its resized track");
         _bubbleTimer.Stop(); SpeechBubble.Visibility = Visibility.Collapsed;
         foreach (string state in new[] { "idle", "pat", "focus", "sleep" })
@@ -482,6 +510,11 @@ public partial class PetWindow : Window
             var file = state == "idle" ? path : Path.Combine(Path.GetDirectoryName(path)!, Path.GetFileNameWithoutExtension(path) + "-" + state + ".png");
             using (var stream = File.Create(file)) encoder.Save(stream);
             testReport.Add($"{state}: animation rendered {bitmap.PixelWidth}x{bitmap.PixelHeight}");
+        }
+        if (_args.Contains("--daily-only"))
+        {
+            await File.WriteAllLinesAsync(Path.ChangeExtension(path, ".txt"), testReport);
+            Close(); return;
         }
         _settings.Compact = true; ApplySize(); UpdateLayout();
         Assert(QuotaCard.ActualWidth == 160 && QuotaCard.ActualHeight == 124, "compact mode retains readable bubble size");

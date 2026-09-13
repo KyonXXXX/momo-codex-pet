@@ -9,7 +9,7 @@ using System.Windows.Media.Imaging;
 
 namespace Momo;
 
-internal static class SelfTests
+internal static partial class SelfTests
 {
     public static async Task<int> RunAsync(bool live)
     {
@@ -17,74 +17,87 @@ internal static class SelfTests
         void Check(string name, Action test) { try { test(); report.Add("PASS " + name); } catch (Exception ex) { failures++; report.Add("FAIL " + name + ": " + ex.Message); } }
         static void Equal<T>(T actual, T expected) { if (!Equals(actual, expected)) throw new Exception($"Expected {expected}, got {actual}"); }
         static UsageSnapshot Parse(string json) { using var doc = JsonDocument.Parse(json); return UsageSnapshot.Parse(doc.RootElement, DateTimeOffset.UtcNow); }
-        Check("Daily progress uses weekly percentage points and dynamic remaining days", () =>
+        RunAutoCareTests(Check);
+        RunCodexFollowerTests(Check);
+        static void Near(double actual, double expected) { if (Math.Abs(actual - expected) > 1e-8) throw new Exception($"Expected {expected}, got {actual}"); }
+        var at = new DateTimeOffset(2026, 9, 11, 12, 0, 0, TimeSpan.Zero);
+        DailyAllowance Allow(double remaining, double days) => DailyAllowance.Calculate(new QuotaWindow(100 - remaining, 10080, at.AddDays(days)), at)!;
+        Check("Fresh weekly quota starts with one seventh available today", () =>
+        { Near(Allow(100, 7).Percent, 100); Near(Allow(90, 7).Percent, 30); });
+        Check("Prior overspending reduces today's allowance before future days", () =>
+        { Near(Allow(30, 3).AvailableWeeklyPercent, 100d / 70); Near(Allow(30, 3).Percent, 10); });
+        Check("Unused quota is redistributed across all remaining days", () =>
+        { Near(Allow(60, 3).AvailableWeeklyPercent, 20); Near(Allow(60, 3).Percent, 140); });
+        Check("Debt carries into later days without negative allowances", () =>
+        { Near(Allow(10, 3).Percent, 0); Near(Allow(10, 2).Percent, 0); Near(Allow(10, 1).Percent, 70); });
+        Check("Cross-computer usage and restart need no local baseline", () =>
         {
-            var now = new DateTimeOffset(2026,9,11,12,0,0,TimeSpan.Zero);
-            var state = new DailyUsage(); var week = new QuotaWindow(40,10080,now.AddDays(5));
-            state.Observe(week with { UsedPercent = 37 }, now.AddMinutes(-1), TimeZoneInfo.Utc,"codex");
-            state.Observe(week,now,TimeZoneInfo.Utc,"codex");
-            var p = state.Calculate(week,now,TimeZoneInfo.Utc,"codex")!;
-            Equal(p.Budget,12d); Equal(p.Used,3d); Equal(p.Percent,25d); Equal(p.RemainingPercent,75d); Equal(p.Partial,true);
-            Equal(state.Calculate(week,now.AddHours(12),TimeZoneInfo.Utc,"codex") is null,true);
-            Equal(state.Calculate(week,now.AddHours(6),TimeZoneInfo.Utc,"codex")!.Budget>12,true);
-            Equal(state.Calculate(week,now.AddHours(6),TimeZoneInfo.Utc,"codex",false)!.Budget,12d);
+            Near(Allow(60, 3).Percent, 140);
+            Near(Allow(30, 3).Percent, 10);
+            Near(Allow(30, 3).Percent, 10);
+            Near(Allow(60, 3).Percent, 140);
         });
-        Check("Reset-time jitter preserves today's accumulated usage across refresh and restart", () =>
+        Check("Overdraw shows the amount beyond today's allocation in base daily units", () =>
+        { Near(Allow(25, 3).OverdrawnPercent, 25); Near(Allow(10, 3).OverdrawnPercent, 130); Equal(Allow(10, 3).IsOverdrawn, true); });
+        Check("Exactly exhausted allocation is zero remaining, not overdraw", () =>
         {
-            var at = new DateTimeOffset(2026,9,11,12,0,0,TimeSpan.Zero);
-            var week = new QuotaWindow(36,10080,at.AddDays(5)); var state = new DailyUsage();
-            state.Observe(week,at,TimeZoneInfo.Utc,"codex");
-            state.Observe(week with { UsedPercent = 37, ResetsAt = week.ResetsAt!.Value.AddSeconds(1) },at.AddMinutes(1),TimeZoneInfo.Utc,"codex");
-            state = JsonSerializer.Deserialize<DailyUsage>(JsonSerializer.Serialize(state))!;
-            state.Observe(week with { UsedPercent = 39 },at.AddMinutes(2),TimeZoneInfo.Utc,"codex");
-            Equal(state.UsedToday,3d); Equal(state.StartedAt,at);
-            Equal(state.Calculate(week with {UsedPercent=39,ResetsAt=week.ResetsAt!.Value.AddSeconds(1)},at.AddMinutes(2),TimeZoneInfo.Utc,"codex")!.Used,3d);
-            state.Observe(week with {UsedPercent=0,ResetsAt=at.AddDays(7)},at.AddMinutes(3),TimeZoneInfo.Utc,"codex");
-            Equal(state.UsedToday,0d);
+            for (int days = 1; days <= 7; days++)
+            { var value = Allow((days - 1) * DailyAllowance.BaseDaily, days); Near(value.Percent, 0); Equal(value.IsOverdrawn, false); }
         });
-        Check("Daily record survives restart and duplicate samples do not double count", () =>
+        Check("Carried debt decreases with each new quota day and clears on replenishment", () =>
+        { Near(Allow(10, 3).OverdrawnPercent, 130); Near(Allow(10, 2).OverdrawnPercent, 30); Near(Allow(10, 1).OverdrawnPercent, 0); Equal(Allow(100, 7).IsOverdrawn, false); });
+        Check("Overdraw responds to global snapshots and preserves small excess", () =>
         {
-            var now=DateTimeOffset.UtcNow;var week=new QuotaWindow(20,10080,now.AddDays(5));var s=new DailyUsage();
-            s.Observe(week,now,TimeZoneInfo.Utc,"codex");s.Observe(week with {UsedPercent=23},now,TimeZoneInfo.Utc,"codex");
-            s=JsonSerializer.Deserialize<DailyUsage>(JsonSerializer.Serialize(s))!;
-            s.Observe(week with {UsedPercent=23},now,TimeZoneInfo.Utc,"codex");Equal(s.UsedToday,3d);
-            s.Observe(week with {UsedPercent=25},now.AddSeconds(60),TimeZoneInfo.Utc,"codex");Equal(s.UsedToday,5d);
+            Equal(Allow(30, 3).IsOverdrawn, false); Equal(Allow(25, 3).IsOverdrawn, true);
+            Near(Allow(25, 3).OverdrawnPercent, 25); Equal(Allow(60, 3).IsOverdrawn, false);
+            Near(Allow(2 * DailyAllowance.BaseDaily - .04 / 7, 3).OverdrawnPercent, .04);
         });
-        Check("Daily rollover follows local date and does not attribute overnight gaps", () =>
+        Check("Unused balance is redistributed when the next quota day starts", () =>
+        { Near(Allow(60, 4).Percent, 105); Near(Allow(60, 3).Percent, 140); });
+        Check("Daily boundaries follow reset-cycle 24-hour slices regardless of timezone", () =>
         {
-            var zone=TimeZoneInfo.CreateCustomTimeZone("test",TimeSpan.FromHours(2),"test","test");
-            var at=new DateTimeOffset(2026,9,11,21,59,30,TimeSpan.Zero);var week=new QuotaWindow(20,10080,at.AddDays(5));var s=new DailyUsage();
-            s.Observe(week,at,zone,"codex");s.Observe(week with {UsedPercent=23},at.AddMinutes(1),zone,"codex");
-            Equal(s.Day,"2026-09-12");Equal(s.UsedToday,0d);Equal(s.Partial,false);
-            s.Observe(week with {UsedPercent=30},at.AddDays(1).AddHours(4),zone,"codex");Equal(s.Partial,true);Equal(s.UsedToday,0d);
+            Equal(Allow(60, 3.001).DaysRemaining, 4); Equal(Allow(60, 3).DaysRemaining, 3);
+            Equal(Allow(60, 2.999).DaysRemaining, 3);
+            var week = new QuotaWindow(40, 10080, at.AddDays(2.5));
+            Equal(DailyAllowance.Calculate(week, at), DailyAllowance.Calculate(week, at.ToOffset(TimeSpan.FromHours(9))));
+            Equal(DailyAllowance.Calculate(week, at), DailyAllowance.Calculate(week with { ResetsAt = week.ResetsAt!.Value.AddSeconds(1) }, at));
         });
-        Check("Weekly reset, correction and scope change reset the daily baseline", () =>
+        Check("Final partial day grants only actual remaining weekly quota", () =>
+        { Near(Allow(25, .1).AvailableWeeklyPercent, 25); Near(Allow(25, .1).Percent, 175); Near(Allow(0, .1).Percent, 0); });
+        Check("Missing, invalid and expired weekly data stays unknown", () =>
         {
-            var at=DateTimeOffset.UtcNow;var week=new QuotaWindow(40,10080,at.AddDays(5));var s=new DailyUsage();
-            s.Observe(week,at,TimeZoneInfo.Utc,"a");s.Observe(week with {UsedPercent=45},at,TimeZoneInfo.Utc,"a");
-            s.Observe(week with {UsedPercent=10},at,TimeZoneInfo.Utc,"a");Equal(s.UsedToday,0d);Equal(s.Partial,true);
-            s.Observe(week with {ResetsAt=at.AddDays(6)},at,TimeZoneInfo.Utc,"a");Equal(s.UsedToday,0d);
-            s.Observe(week with {UsedPercent=50},at,TimeZoneInfo.Utc,"b");Equal(s.UsedToday,0d);
+            var week = new QuotaWindow(40, 10080, at.AddDays(3));
+            Equal(DailyAllowance.Calculate(null, at), null);
+            Equal(DailyAllowance.Calculate(week with { UsedPercent = null }, at), null);
+            Equal(DailyAllowance.Calculate(week with { UsedPercent = double.NaN }, at), null);
+            Equal(DailyAllowance.Calculate(week with { UsedPercent = -1 }, at), null);
+            Equal(DailyAllowance.Calculate(week with { UsedPercent = 101 }, at), null);
+            Equal(DailyAllowance.Calculate(week with { ResetsAt = null }, at), null);
+            Equal(DailyAllowance.Calculate(week with { ResetsAt = at }, at), null);
+            Equal(DailyAllowance.Calculate(week with { ResetsAt = at.AddDays(8) }, at), null);
+            Equal(DailyAllowance.Calculate(week with { Minutes = 300 }, at), null);
         });
-        Check("Daily overspend and zero quota have finite nonnegative progress", () =>
+        Check("Offline data cannot grant a new day's allowance or survive weekly reset", () =>
         {
-            var at=DateTimeOffset.UtcNow;var week=new QuotaWindow(0,10080,at.AddDays(5));var s=new DailyUsage();
-            s.Observe(week,at,TimeZoneInfo.Utc,"a");week=week with {UsedPercent=80};s.Observe(week,at,TimeZoneInfo.Utc,"a");
-            Equal(s.Calculate(week,at,TimeZoneInfo.Utc,"a")!.Percent>100,true);Equal(s.Calculate(week,at,TimeZoneInfo.Utc,"a")!.RemainingPercent,0d);
-            week=week with {UsedPercent=100};s.Observe(week,at,TimeZoneInfo.Utc,"a");Equal(s.Calculate(week,at,TimeZoneInfo.Utc,"a")!.Percent,100d);
+            var week = new QuotaWindow(40, 10080, at.AddDays(2.5));
+            Equal(DailyAllowance.ForDisplay(week, at, at.AddMinutes(3), false), DailyAllowance.Calculate(week, at));
+            Equal(DailyAllowance.ForDisplay(week, at, at.AddHours(13), false), null);
+            Equal(DailyAllowance.ForDisplay(week, at, at.AddDays(3), false), null);
+            Equal(DailyAllowance.ForDisplay(week, at.AddMinutes(1), at, true), null);
         });
-        Check("Unknown, expired and stale-out-of-order quota is not fabricated", () =>
+        Check("Increasing account usage never increases same-day allowance", () =>
         {
-            var at=DateTimeOffset.UtcNow;var week=new QuotaWindow(40,10080,at.AddDays(5));var s=new DailyUsage();
-            Equal(s.Calculate(week,at,TimeZoneInfo.Utc,"a"),null);s.Observe(week,at,TimeZoneInfo.Utc,"a");
-            s.Observe(week with {UsedPercent=45},at.AddSeconds(-1),TimeZoneInfo.Utc,"a");Equal(s.UsedToday,0d);
-            Equal(s.Calculate(null,at,TimeZoneInfo.Utc,"a"),null);Equal(s.Calculate(week with {ResetsAt=null},at,TimeZoneInfo.Utc,"a"),null);
-            Equal(s.Calculate(week,at.AddDays(5),TimeZoneInfo.Utc,"a"),null);
-        });
-        Check("Final partial day never suggests more than weekly remaining", () =>
-        {
-            var at=DateTimeOffset.UtcNow;var week=new QuotaWindow(75,10080,at.AddHours(2));var s=new DailyUsage();
-            s.Observe(week,at,TimeZoneInfo.Utc,"a");Equal(s.Calculate(week,at,TimeZoneInfo.Utc,"a")!.Budget,25d);
+            for (int day = 1; day <= 7; day++)
+            {
+                double previous = 0;
+                for (int remaining = 0; remaining <= 100; remaining++)
+                {
+                    var value = Allow(remaining, day);
+                    Equal(value.AvailableWeeklyPercent >= previous - 1e-8 && value.AvailableWeeklyPercent <= remaining, true);
+                    previous = value.AvailableWeeklyPercent;
+                }
+                Near(Allow(day * DailyAllowance.BaseDaily, day).Percent, 100);
+            }
         });
         Check("Old settings gain healthy pet defaults without changing quota visibility", () =>
         {
@@ -169,6 +182,8 @@ internal static class SelfTests
         });
         if (live)
         {
+            Check("Live Codex Desktop root process is detected independently of CLI children", () =>
+            { if (CodexFollower.DesktopInstances() is not { Length: > 0 }) throw new Exception("No desktop process detected"); });
             try
             {
                 var data = await new CodexUsageClient().ReadAsync(CancellationToken.None);

@@ -102,6 +102,7 @@ public partial class PetWindow
         var now=DateTimeOffset.UtcNow;
         if(!App.IsTestMode)_settings.Life.Tick((now-_lifeAt).TotalSeconds,_sleeping,_activity);
         _lifeAt=now;
+        if(!App.IsTestMode)TryAutoCare();
         if(_actionUntil is {} until&&now>=until)EndAction();
         if(_activity is not null)
         {

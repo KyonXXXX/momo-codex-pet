@@ -17,6 +17,8 @@ public sealed class PetSettings
     public PetLife Life { get; set; } = new();
     public bool AutoInteract { get; set; } = true;
     public bool AutoMove { get; set; }
+    public bool AutoCareEnabled { get; set; } = true;
+    public bool FollowCodexDesktop { get; set; } = true;
     public string MoodOverride { get; set; } = "auto";
     private static string FilePath => Path.Combine(App.DataDirectory, "settings.json");
     public static PetSettings Load()
